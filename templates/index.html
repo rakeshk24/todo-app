@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>My Todo List</h1>
+
+        <!-- Add Todo Form -->
+        <div class="add-todo-section">
+            <h2>Add New Todo</h2>
+            <form method="POST" action="{{ url_for('add_todo') }}" class="todo-form">
+                <input
+                    type="text"
+                    name="title"
+                    placeholder="Todo title"
+                    required
+                    class="input-field"
+                />
+                <textarea
+                    name="description"
+                    placeholder="Description (optional)"
+                    class="input-field"
+                ></textarea>
+                <input
+                    type="datetime-local"
+                    name="deadline"
+                    class="input-field"
+                />
+                <button type="submit" class="btn btn-primary">Add Todo</button>
+            </form>
+        </div>
+
+        <!-- Todos List -->
+        <div class="todos-section">
+            <h2>Your Todos</h2>
+            {% if todos %}
+                <div class="todos-container">
+                    {% for todo in todos %}
+                        <div class="todo-item {% if todo.completed %}completed{% endif %}">
+                            <div class="todo-content">
+                                <a href="{{ url_for('toggle_todo', todo_id=todo.id) }}" class="checkbox">
+                                    <input
+                                        type="checkbox"
+                                        {% if todo.completed %}checked{% endif %}
+                                        disabled
+                                    />
+                                </a>
+                                <div class="todo-text">
+                                    <h3 class="todo-title">{{ todo.title }}</h3>
+                                    {% if todo.description %}
+                                        <p class="todo-description">{{ todo.description }}</p>
+                                    {% endif %}
+                                    {% if todo.deadline %}
+                                        <p class="todo-deadline">
+                                            <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="todo-actions">
+                                <a href="{{ url_for('edit_todo', todo_id=todo.id) }}" class="btn btn-edit">Edit</a>
+                                <a href="{{ url_for('delete_todo', todo_id=todo.id) }}" class="btn btn-delete" onclick="return confirm('Are you sure?')">Delete</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-todos">No todos yet. Add one above!</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -8,7 +8,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY requirements.txt ./
 
-# INTENTIONAL MISTAKE: wrong filename -> docker build will fail here
 RUN pip install --no-cache-dir -r requirements.tx
 
 COPY . .

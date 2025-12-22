@@ -1,4 +1,4 @@
-name: Docker build (intentional failure)
+name: Docker build
 
 on:
   pull_request:

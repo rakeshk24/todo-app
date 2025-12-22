@@ -1,0 +1,35 @@
+name: Python dependency install/build
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  deps:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      # This is the "pipeline failure" you want CodeRabbit to analyze
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Optional: sanity import (won't run if deps step fails)
+      - name: Import check
+        run: python -c "import flask, requests; print('imports ok')"

@@ -55,11 +55,19 @@ def add_todo():
         return redirect(url_for('index'))
 
     deadline_obj = None
+    # if deadline:
+    #     try:
+    #         deadline_obj = datetime.strptime(deadline, '%Y-%m-%dT%H:%M')
+    #     except ValueError:
+    #         pass
+
     if deadline:
         try:
             deadline_obj = datetime.strptime(deadline, '%Y-%m-%dT%H:%M')
         except ValueError:
             pass
+    else:
+        deadline_obj = datetime.strptime(get_today_date(), '%Y-%m-%d')
 
     new_todo = Todo(title=title, description=description, deadline=deadline_obj)
     db.session.add(new_todo)

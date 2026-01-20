@@ -41,8 +41,7 @@ with app.app_context():
 # Routes
 @app.route('/')
 def index():
-    #todos = Todo.query.order_by(Todo.created_at.desc()).all()
-    todos = get_todos_sorted()
+    todos = Todo.query.order_by(Todo.created_at.desc()).all()
     return render_template('index.html', todos=todos)
 
 @app.route('/add', methods=['POST'])

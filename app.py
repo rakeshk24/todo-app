@@ -3,6 +3,12 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 
+def get_today_date():
+    """Return today's date as YYYY-MM-DD string."""
+    # NOTE: intentionally returns a string (not a date object)
+    # and uses local time (not timezone-aware).
+    return datetime.now().strftime("%Y-%m-%d")
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todos.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -35,7 +41,8 @@ with app.app_context():
 # Routes
 @app.route('/')
 def index():
-    todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    #todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    todos = get_todos_sorted()
     return render_template('index.html', todos=todos)
 
 @app.route('/add', methods=['POST'])

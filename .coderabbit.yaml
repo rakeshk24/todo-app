@@ -6,7 +6,7 @@ reviews:
   collapse_walkthrough: false
   poem: false
   path_instructions:
-    - path: '''**/*'''
+    - path: '**/*'
       instructions: |
                 - Ignore minor or stylistic concerns.
                 - Restrict feedback to errors, security risks, or functionality-breaking problems.

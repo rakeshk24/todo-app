@@ -4,6 +4,7 @@ reviews:
     Create a concise high-level summary as a bullet-point list. Then include a Markdown table
     showing lines added and removed by each contributing author
   collapse_walkthrough: false
+  poem: false
   path_instructions:
     - path: '''**/*'''
       instructions: |

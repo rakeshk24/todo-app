@@ -33,6 +33,39 @@ h2 {
     font-size: 1.5em;
 }
 
+/* Flash Messages */
+.flash-message {
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border-left: 4px solid;
+    font-weight: 500;
+    animation: slideIn 0.3s ease-in-out;
+}
+
+.flash-success {
+    background: #d4edda;
+    color: #155724;
+    border-left-color: #28a745;
+}
+
+.flash-error {
+    background: #f8d7da;
+    color: #721c24;
+    border-left-color: #f44336;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Add Todo Section */
 .add-todo-section {
     background: #f8f9fa;
@@ -135,6 +168,46 @@ textarea.input-field {
     margin-top: 30px;
 }
 
+.todos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.todos-header h2 {
+    margin-bottom: 0;
+}
+
+.incomplete-counter {
+    background: #e8f4f8;
+    padding: 10px 20px;
+    border-radius: 20px;
+    border-left: 4px solid #667eea;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.counter-label {
+    color: #555;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.counter-value {
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1em;
+}
+
 .todos-container {
     display: flex;
     flex-direction: column;
@@ -203,9 +276,27 @@ textarea.input-field {
     margin-bottom: 8px;
 }
 
+.todo-meta {
+    display: flex;
+    gap: 15px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.todo-category {
+    background: #f0f0f0;
+    color: #667eea;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.85em;
+    font-weight: 600;
+    display: inline-block;
+}
+
 .todo-deadline {
     color: #e74c3c;
     font-size: 0.9em;
+    display: inline-block;
 }
 
 .todo-actions {

@@ -10,6 +10,17 @@
     <div class="container">
         <h1>My Todo List</h1>
 
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <!-- Add Todo Form -->
         <div class="add-todo-section">
             <h2>Add New Todo</h2>
@@ -27,6 +38,13 @@
                     class="input-field"
                 ></textarea>
                 <input
+                    type="text"
+                    name="category"
+                    placeholder="Category (e.g., Work, Personal, Shopping)"
+                    maxlength="100"
+                    class="input-field"
+                />
+                <input
                     type="datetime-local"
                     name="deadline"
                     class="input-field"
@@ -37,7 +55,13 @@
 
         <!-- Todos List -->
         <div class="todos-section">
-            <h2>Your Todos</h2>
+            <div class="todos-header">
+                <h2>Your Todos</h2>
+                <div class="incomplete-counter">
+                    <span class="counter-label">Incomplete Items:</span>
+                    <span class="counter-value">{{ incomplete_count }}</span>
+                </div>
+            </div>
             {% if todos %}
                 <div class="todos-container">
                     {% for todo in todos %}
@@ -55,11 +79,16 @@
                                     {% if todo.description %}
                                         <p class="todo-description">{{ todo.description }}</p>
                                     {% endif %}
-                                    {% if todo.deadline %}
-                                        <p class="todo-deadline">
-                                            <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
-                                        </p>
-                                    {% endif %}
+                                    <div class="todo-meta">
+                                        {% if todo.category %}
+                                            <span class="todo-category">📁 {{ todo.category }}</span>
+                                        {% endif %}
+                                        {% if todo.deadline %}
+                                            <span class="todo-deadline">
+                                                📅 {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                             <div class="todo-actions">

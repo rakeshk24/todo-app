@@ -50,7 +50,7 @@ def add_todo():
     title = request.form.get('title')
     description = request.form.get('description')
     deadline = request.form.get('deadline')
-    category = request.form.get('category', 'General')
+    category = request.form.get('category', '').strip() or 'General'
 
     if not title:
         flash('Title is required!', 'error')

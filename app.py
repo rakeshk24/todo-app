@@ -67,6 +67,7 @@ def index():
 
 @app.route('/add', methods=['POST'])
 def add_todo():
+    print(f"[DEBUG] add_todo called with auth_token={request.headers.get('Authorization', 'none')}")
     title = request.form.get('title')
     description = request.form.get('description')
     deadline = request.form.get('deadline')

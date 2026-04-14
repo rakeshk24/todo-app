@@ -27,6 +27,11 @@ reviews:
                 - Provide a top-level summary of critical blockers rather than detailed per-line notes.
                 - When in doubt, err on the side of fewer comments — brevity and
                   blocking issues only.
+  pre_merge_checks:
+    custom_checks:
+      - name: "security checks"
+        mode: "error"
+        instructions: "Fail if Any log statement includes tokens, passwords, API keys, or auth headers. Any string matches common credential patterns (sk_live_*, AKIA*, *_SECRET, *_KEY)"
 issue_enrichment:
   planning:
     enabled: false

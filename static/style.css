@@ -221,6 +221,55 @@ textarea.input-field {
     font-size: 1.1em;
 }
 
+/* Tag Filter Bar */
+.tag-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.tag-filter-chip {
+    padding: 5px 12px;
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    background: #e9ecef;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.tag-filter-chip:hover,
+.tag-filter-chip.active {
+    background: #667eea;
+    color: white;
+}
+
+/* Tag Chips on Todo Items */
+.todo-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.tag-chip {
+    padding: 2px 9px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-decoration: none;
+    background: #e8eaff;
+    color: #4a5fd4;
+    transition: background 0.2s;
+}
+
+.tag-chip:hover {
+    background: #667eea;
+    color: white;
+}
+
 /* Responsive Design */
 @media (max-width: 600px) {
     .container {

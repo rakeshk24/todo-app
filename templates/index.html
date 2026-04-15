@@ -31,6 +31,11 @@
                     name="deadline"
                     class="input-field"
                 />
+                <select name="priority" class="input-field">
+                    <option value="low">Low Priority</option>
+                    <option value="medium" selected>Medium Priority</option>
+                    <option value="high">High Priority</option>
+                </select>
                 <button type="submit" class="btn btn-primary">Add Todo</button>
             </form>
         </div>
@@ -51,7 +56,10 @@
                                     />
                                 </a>
                                 <div class="todo-text">
-                                    <h3 class="todo-title">{{ todo.title }}</h3>
+                                    <h3 class="todo-title">
+                                        {{ todo.title }}
+                                        <span class="priority-badge priority-{{ todo.priority }}">{{ todo.priority }}</span>
+                                    </h3>
                                     {% if todo.description %}
                                         <p class="todo-description">{{ todo.description }}</p>
                                     {% endif %}

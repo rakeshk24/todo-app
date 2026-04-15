@@ -29,4 +29,4 @@ reviews:
                   blocking issues only.
 issue_enrichment:
   planning:
-    enabled: false
+    enabled: true

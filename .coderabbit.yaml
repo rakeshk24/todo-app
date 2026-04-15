@@ -27,6 +27,15 @@ reviews:
                 - Provide a top-level summary of critical blockers rather than detailed per-line notes.
                 - When in doubt, err on the side of fewer comments — brevity and
                   blocking issues only.
+knowledge_base:
+  jira:
+    usage: "enabled"
+    project_keys:
+      - "To-Do App"
+chat:
+  integrations:
+    jira:
+      usage: "enabled"
 issue_enrichment:
   planning:
     enabled: true

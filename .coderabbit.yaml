@@ -33,7 +33,7 @@ knowledge_base:
     project_keys:
       - "To-Do App"
   mcp:
-    usage: auto
+    usage: enabled
 chat:
   integrations:
     jira:

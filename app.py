@@ -88,6 +88,13 @@ def delete_todo(todo_id):
     db.session.commit()
     return redirect(url_for('index'))
 
+@app.route('/clear-completed')
+def clear_completed():
+    Todo.query.filter_by(completed=True).delete()
+    db.session.commit()
+    flash('Completed todos cleared!', 'success')
+    return redirect(url_for('index'))
+
 @app.route('/edit/<int:todo_id>', methods=['GET', 'POST'])
 def edit_todo(todo_id):
     todo = Todo.query.get_or_404(todo_id)

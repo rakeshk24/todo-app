@@ -32,6 +32,17 @@ reviews:
       - name: "security checks"
         mode: "error"
         instructions: "Fail if Any log statement includes tokens, passwords, API keys, or auth headers. Any string matches common credential patterns (sk_live_*, AKIA*, *_SECRET, *_KEY)"
+knowledge_base:
+  jira:
+    usage: "enabled"
+    project_keys:
+      - "To-Do App"
+  mcp:
+    usage: enabled
+chat:
+  integrations:
+    jira:
+      usage: "enabled"
 issue_enrichment:
   planning:
-    enabled: false
+    enabled: true

@@ -31,13 +31,29 @@
                     name="deadline"
                     class="input-field"
                 />
+                <input
+                    type="text"
+                    name="tags"
+                    placeholder="Tags (comma-separated, e.g. work, urgent)"
+                    class="input-field"
+                />
                 <button type="submit" class="btn btn-primary">Add Todo</button>
             </form>
         </div>
 
+        <!-- Tag Filter Bar -->
+        {% if all_tags %}
+        <div class="tag-filter-bar">
+            <a href="{{ url_for('index') }}" class="tag-filter-chip {% if not active_tag %}active{% endif %}">All</a>
+            {% for tag in all_tags %}
+            <a href="{{ url_for('index', tag=tag) }}" class="tag-filter-chip {% if active_tag == tag %}active{% endif %}">{{ tag }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <!-- Todos List -->
         <div class="todos-section">
-            <h2>Your Todos</h2>
+            <h2>{% if active_tag %}Todos tagged "{{ active_tag }}"{% else %}Your Todos{% endif %}</h2>
             {% if todos %}
                 <div class="todos-container">
                     {% for todo in todos %}
@@ -59,6 +75,13 @@
                                         <p class="todo-deadline">
                                             <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
                                         </p>
+                                    {% endif %}
+                                    {% if todo.get_tags() %}
+                                    <div class="todo-tags">
+                                        {% for tag in todo.get_tags() %}
+                                        <a href="{{ url_for('index', tag=tag) }}" class="tag-chip">{{ tag }}</a>
+                                        {% endfor %}
+                                    </div>
                                     {% endif %}
                                 </div>
                             </div>

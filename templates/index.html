@@ -45,10 +45,11 @@
                 class="input-field"
                 oninput="filterTodos(this.value)"
             />
+            <span id="search-status"></span>
             {% if todos %}
                 <div class="todos-container">
                     {% for todo in todos %}
-                        <div class="todo-item {% if todo.completed %}completed{% endif %}" data-title="{{ todo.title | lower }}">
+                        <div class="todo-item {% if todo.completed %}completed{% endif %}" data-title="{{ todo.title | safe | lower }}">
                             <div class="todo-content">
                                 <a href="{{ url_for('toggle_todo', todo_id=todo.id) }}" class="checkbox">
                                     <input
@@ -85,9 +86,26 @@
         function filterTodos(query) {
             const q = query.toLowerCase();
             document.querySelectorAll('.todo-item').forEach(function(item) {
-                item.style.display = item.dataset.title.includes(q) ? '' : 'none';
+                const titleEl = item.querySelector('.todo-title');
+                if (item.dataset.title.includes(q)) {
+                    item.style.display = '';
+                    titleEl.innerHTML = titleEl.textContent.replace(new RegExp(q, 'i'), '<mark>$&</mark>');
+                } else {
+                    item.style.display = 'none';
+                    titleEl.innerHTML = titleEl.textContent;
+                }
             });
         }
+
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const q = params.get('q');
+            if (q) {
+                document.getElementById('todo-search').value = q;
+                document.getElementById('search-status').innerHTML = 'Showing results for: ' + q;
+                filterTodos(q);
+            }
+        })();
     </script>
 </body>
 </html>

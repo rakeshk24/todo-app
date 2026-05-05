@@ -38,10 +38,17 @@
         <!-- Todos List -->
         <div class="todos-section">
             <h2>Your Todos</h2>
+            <input
+                type="text"
+                id="todo-search"
+                placeholder="Search todos..."
+                class="input-field"
+                oninput="filterTodos(this.value)"
+            />
             {% if todos %}
                 <div class="todos-container">
                     {% for todo in todos %}
-                        <div class="todo-item {% if todo.completed %}completed{% endif %}">
+                        <div class="todo-item {% if todo.completed %}completed{% endif %}" data-title="{{ todo.title | lower }}">
                             <div class="todo-content">
                                 <a href="{{ url_for('toggle_todo', todo_id=todo.id) }}" class="checkbox">
                                     <input
@@ -74,5 +81,13 @@
             {% endif %}
         </div>
     </div>
+    <script>
+        function filterTodos(query) {
+            const q = query.toLowerCase();
+            document.querySelectorAll('.todo-item').forEach(function(item) {
+                item.style.display = item.dataset.title.includes(q) ? '' : 'none';
+            });
+        }
+    </script>
 </body>
 </html>

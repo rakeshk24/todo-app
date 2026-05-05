@@ -49,7 +49,7 @@
             {% if todos %}
                 <div class="todos-container">
                     {% for todo in todos %}
-                        <div class="todo-item {% if todo.completed %}completed{% endif %}" data-title="{{ todo.title | safe | lower }}">
+                        <div class="todo-item {% if todo.completed %}completed{% endif %}" data-title="{{ todo.title | lower }}">
                             <div class="todo-content">
                                 <a href="{{ url_for('toggle_todo', todo_id=todo.id) }}" class="checkbox">
                                     <input
@@ -83,16 +83,39 @@
         </div>
     </div>
     <script>
+        function escapeRegExp(s) {
+            return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function highlightTitle(titleEl, q) {
+            const text = titleEl.textContent;
+            titleEl.textContent = '';
+            if (!q) {
+                titleEl.appendChild(document.createTextNode(text));
+                return;
+            }
+            const re = new RegExp(escapeRegExp(q), 'gi');
+            let last = 0, match;
+            while ((match = re.exec(text)) !== null) {
+                titleEl.appendChild(document.createTextNode(text.slice(last, match.index)));
+                const mark = document.createElement('mark');
+                mark.textContent = match[0];
+                titleEl.appendChild(mark);
+                last = re.lastIndex;
+            }
+            titleEl.appendChild(document.createTextNode(text.slice(last)));
+        }
+
         function filterTodos(query) {
             const q = query.toLowerCase();
             document.querySelectorAll('.todo-item').forEach(function(item) {
                 const titleEl = item.querySelector('.todo-title');
                 if (item.dataset.title.includes(q)) {
                     item.style.display = '';
-                    titleEl.innerHTML = titleEl.textContent.replace(new RegExp(q, 'i'), '<mark>$&</mark>');
+                    highlightTitle(titleEl, q);
                 } else {
                     item.style.display = 'none';
-                    titleEl.innerHTML = titleEl.textContent;
+                    highlightTitle(titleEl, '');
                 }
             });
         }
@@ -102,10 +125,10 @@
             const q = params.get('q');
             if (q) {
                 document.getElementById('todo-search').value = q;
-                document.getElementById('search-status').innerHTML = 'Showing results for: ' + q;
+                document.getElementById('search-status').textContent = 'Showing results for: ' + q;
                 filterTodos(q);
             }
         })();
-    </script>
+
 </body>
 </html>

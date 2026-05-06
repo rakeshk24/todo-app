@@ -43,6 +43,10 @@ reviews:
           Follow existing project patterns for logging, validation, and auth.
           Keep changes minimal and scoped to the PR. Do not refactor unrelated code.
 knowledge_base:
+  code_guidelines:
+  enabled: true
+  filePatterns:
+    - "**/CODING_GUIDELINES.md"
   jira:
     usage: "enabled"
     project_keys:

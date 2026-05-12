@@ -5,6 +5,7 @@ reviews:
     showing lines added and removed by each contributing author
   collapse_walkthrough: false
   poem: false
+  review_details: true
   path_instructions:
     - path: '**/*'
       instructions: |

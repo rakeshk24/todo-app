@@ -5,6 +5,7 @@ reviews:
     showing lines added and removed by each contributing author
   collapse_walkthrough: false
   poem: false
+  review_details: true
   path_instructions:
     - path: '**/*'
       instructions: |
@@ -44,9 +45,8 @@ reviews:
           Keep changes minimal and scoped to the PR. Do not refactor unrelated code.
 knowledge_base:
   code_guidelines:
-  enabled: true
-  filePatterns:
-    - "**/CODING_GUIDELINES.md"
+    filePatterns:
+      - "**/CODING_GUIDELINES.md"
   jira:
     usage: "enabled"
     project_keys:

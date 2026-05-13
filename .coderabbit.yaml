@@ -3,7 +3,6 @@ reviews:
   high_level_summary_instructions: >-
     Create a concise high-level summary as a bullet-point list. Then include a Markdown table
     showing lines added and removed by each contributing author
-  collapse_walkthrough: false
   poem: false
   review_details: true
   path_instructions:

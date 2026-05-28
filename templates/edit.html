@@ -31,6 +31,11 @@
                     class="input-field"
                     value="{% if todo.deadline %}{{ todo.deadline.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
                 />
+                <select name="priority" class="input-field">
+                    <option value="low" {% if todo.priority == 'low' %}selected{% endif %}>Low Priority</option>
+                    <option value="medium" {% if todo.priority == 'medium' %}selected{% endif %}>Medium Priority</option>
+                    <option value="high" {% if todo.priority == 'high' %}selected{% endif %}>High Priority</option>
+                </select>
                 <div class="button-group">
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                     <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>

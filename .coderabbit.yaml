@@ -27,6 +27,13 @@ reviews:
                 - Provide a top-level summary of critical blockers rather than detailed per-line notes.
                 - When in doubt, err on the side of fewer comments — brevity and
                   blocking issues only.
+  labeling_instructions:
+    - label: feature
+      instructions: Apply when the PR adds new user-facing functionality that did not exist before.
+    - label: database-migration
+      instructions: Apply when the PR includes schema changes or inline migrations such as ALTER TABLE statements.
+    - label: ui
+      instructions: Apply when the PR modifies HTML templates or CSS styling.
   finishing_touches:
     custom:
       - name: harden security

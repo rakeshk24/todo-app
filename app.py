@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from datetime import datetime
 import os
 
@@ -22,6 +23,7 @@ class Todo(db.Model):
     description = db.Column(db.Text)
     deadline = db.Column(db.DateTime)
     completed = db.Column(db.Boolean, default=False)
+    priority = db.Column(db.String(10), nullable=False, default='medium')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -31,12 +33,19 @@ class Todo(db.Model):
             'description': self.description,
             'deadline': self.deadline.strftime('%Y-%m-%d %H:%M') if self.deadline else None,
             'completed': self.completed,
+            'priority': self.priority,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M')
         }
 
-# Create tables
+# Create tables and migrate existing DBs
 with app.app_context():
     db.create_all()
+    with db.engine.connect() as conn:
+        try:
+            conn.execute(text('ALTER TABLE todo ADD COLUMN priority VARCHAR(10) NOT NULL DEFAULT "medium"'))
+            conn.commit()
+        except Exception:
+            pass  # column already exists
 
 # Routes
 @app.route('/')
@@ -49,6 +58,7 @@ def add_todo():
     title = request.form.get('title')
     description = request.form.get('description')
     deadline = request.form.get('deadline')
+    priority = request.form.get('priority', 'medium')
 
     if not title:
         return redirect(url_for('index'))
@@ -68,7 +78,7 @@ def add_todo():
     else:
         deadline_obj = datetime.strptime(get_today_date(), '%Y-%m-%d')
 
-    new_todo = Todo(title=title, description=description, deadline=deadline_obj)
+    new_todo = Todo(title=title, description=description, deadline=deadline_obj, priority=priority)
     db.session.add(new_todo)
     db.session.commit()
 
@@ -105,6 +115,7 @@ def edit_todo(todo_id):
         else:
             todo.deadline = None
 
+        todo.priority = request.form.get('priority', todo.priority)
         db.session.commit()
         return redirect(url_for('index'))
 

@@ -27,6 +27,12 @@ reviews:
                 - Provide a top-level summary of critical blockers rather than detailed per-line notes.
                 - When in doubt, err on the side of fewer comments — brevity and
                   blocking issues only.
+  auto_apply_labels: true
+  labeling_instructions:
+    - label: database
+      instructions: Apply when the PR includes schema changes or inline migrations such as ALTER TABLE statements.
+    - label: ui
+      instructions: Apply when the PR modifies HTML templates or CSS styling.
   finishing_touches:
     custom:
       - name: harden security

@@ -8,7 +8,7 @@ reviews:
     docstrings:
       mode: off
     title:
-      title: off
+      mode: off
     description:
       mode: error
     issue_assessment:

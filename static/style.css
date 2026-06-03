@@ -163,6 +163,30 @@ textarea.input-field {
     opacity: 0.7;
 }
 
+.todo-item.overdue {
+    border-color: #e74c3c;
+    background: #fff5f5;
+    transition: none;
+}
+
+.todo-item.overdue:hover {
+    border-color: #c0392b;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+}
+
+.overdue-badge {
+    display: inline-block;
+    background: #e74c3c;
+    color: white;
+    font-size: 0.75em;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .todo-item.completed .todo-title {
     text-decoration: line-through;
     color: #999;

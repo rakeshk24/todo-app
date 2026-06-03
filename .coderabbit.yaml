@@ -1,10 +1,18 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 reviews:
-  high_level_summary_instructions: >-
-    Create a concise high-level summary as a bullet-point list. Then include a Markdown table
-    showing lines added and removed by each contributing author
+  high_level_summary: false
+  request_changes_workflow: true
   poem: false
   review_details: true
+  pre_merge_checks:
+    docstring:
+      mode: off
+    title:
+      title: off
+    description:
+      mode: error
+    issue_assessment:
+      mode: off
   path_instructions:
     - path: '**/*'
       instructions: |

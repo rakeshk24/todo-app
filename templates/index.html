@@ -41,7 +41,7 @@
             {% if todos %}
                 <div class="todos-container">
                     {% for todo in todos %}
-                        <div class="todo-item {% if todo.completed %}completed{% endif %}">
+                        <div class="todo-item {% if todo.completed %}completed{% if todo.deadline and todo.deadline < now %}overdue{% endif %}{% elif todo.deadline and todo.deadline < now %}overdue{% endif %}">
                             <div class="todo-content">
                                 <a href="{{ url_for('toggle_todo', todo_id=todo.id) }}" class="checkbox">
                                     <input
@@ -58,6 +58,9 @@
                                     {% if todo.deadline %}
                                         <p class="todo-deadline">
                                             <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
+                                            {% if not todo.completed and todo.deadline < now %}
+                                                <span class="overdue-badge">Overdue</span>
+                                            {% endif %}
                                         </p>
                                     {% endif %}
                                 </div>

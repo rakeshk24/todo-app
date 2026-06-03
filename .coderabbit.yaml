@@ -5,7 +5,7 @@ reviews:
   poem: false
   review_details: true
   pre_merge_checks:
-    docstring:
+    docstrings:
       mode: off
     title:
       title: off

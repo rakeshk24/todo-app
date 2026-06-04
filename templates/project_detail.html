@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.name }} - Project{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="project-detail-header" style="border-left: 6px solid {{ project.color }};">
+        <div class="project-detail-title">
+            <span class="project-color-swatch large" style="background:{{ project.color }};"></span>
+            <h1>{{ project.name }}</h1>
+        </div>
+        {% if project.description %}
+        <p class="project-detail-description">{{ project.description }}</p>
+        {% endif %}
+        <p class="project-detail-meta">
+            {{ todos | length }} todo{{ 's' if todos | length != 1 }} &bull;
+            Created {{ project.created_at.strftime('%Y-%m-%d') }}
+        </p>
+        <div class="project-detail-actions">
+            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-secondary">&larr; All Projects</a>
+            <a href="{{ url_for('todos.index', project_id=project.id) }}" class="btn btn-edit">Filter Todos</a>
+        </div>
+    </div>
+
+    <div class="todos-section">
+        <h2>Todos in {{ project.name }}</h2>
+        {% if todos %}
+        <div class="todos-container">
+            {% for todo in todos %}
+            {% set is_overdue = todo.deadline and not todo.completed and todo.deadline < now %}
+            <div class="todo-item {% if todo.completed %}completed{% endif %} {% if is_overdue %}overdue{% endif %}">
+                <div class="todo-content">
+                    <a href="{{ url_for('todos.toggle_todo', todo_id=todo.id) }}" class="checkbox">
+                        <input type="checkbox" {% if todo.completed %}checked{% endif %} disabled />
+                    </a>
+                    <div class="todo-text">
+                        <h3 class="todo-title">
+                            {{ todo.title }}
+                            {% if is_overdue %}
+                            <span class="overdue-badge">Overdue</span>
+                            {% endif %}
+                        </h3>
+                        {% if todo.description %}
+                        <p class="todo-description">{{ todo.description }}</p>
+                        {% endif %}
+                        {% if todo.deadline %}
+                        <p class="todo-deadline">
+                            <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
+                        </p>
+                        {% endif %}
+                        <div class="todo-meta">
+                            {% for tag in todo.tags %}
+                            <span class="tag-pill" style="background:{{ tag.color }}; color:#fff;">{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="todo-actions">
+                    <a href="{{ url_for('todos.edit_todo', todo_id=todo.id) }}" class="btn btn-edit">Edit</a>
+                    <a href="{{ url_for('todos.delete_todo', todo_id=todo.id) }}" class="btn btn-delete"
+                       onclick="return confirm('Are you sure?')">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="no-todos">No todos in this project yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

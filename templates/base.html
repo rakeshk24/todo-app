@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Todo App{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <a href="{{ url_for('todos.index') }}">TodoApp</a>
+        </div>
+        <div class="nav-links">
+            <a href="{{ url_for('todos.index') }}" class="nav-link">My Todos</a>
+            <a href="{{ url_for('projects.list_projects') }}" class="nav-link">Projects</a>
+            <a href="{{ url_for('tags.list_tags') }}" class="nav-link">Tags</a>
+            <a href="{{ url_for('activity.activity_log') }}" class="nav-link">Activity</a>
+            <div class="export-dropdown">
+                <button class="btn btn-export nav-export-btn">Export &#9660;</button>
+                <div class="export-menu">
+                    <a href="{{ url_for('export.export_csv') }}" class="export-item">Export CSV</a>
+                    <a href="{{ url_for('export.export_json') }}" class="export-item">Export JSON</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="{{ url_for('static', filename='tags.js') }}"></script>
+</body>
+</html>

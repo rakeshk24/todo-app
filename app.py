@@ -42,7 +42,7 @@ with app.app_context():
 @app.route('/')
 def index():
     todos = Todo.query.order_by(Todo.created_at.desc()).all()
-    return render_template('index.html', todos=todos)
+    return render_template('index.html', todos=todos, now=datetime.now())
 
 @app.route('/add', methods=['POST'])
 def add_todo():

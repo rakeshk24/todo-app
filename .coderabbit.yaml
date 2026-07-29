@@ -27,6 +27,17 @@ reviews:
                 - Provide a top-level summary of critical blockers rather than detailed per-line notes.
                 - When in doubt, err on the side of fewer comments — brevity and
                   blocking issues only.
+  pre_merge_checks:
+    custom_checks:
+      - name: "Security checks"
+        mode: "warning"
+        instructions: |
+          Fail if any of the following are detected:
+          - Hardcoded credentials, API keys, or tokens in source or config files
+          - User-supplied input passed directly to a query, eval, or shell call without sanitization
+          - Authentication or authorization checks bypassed on endpoints or workflow steps
+          - REST integration credentials stored in plain text rather than the GW credential store
+          - TLS verification disabled on outbound HTTP integrations  
   finishing_touches:
     custom:
       - name: harden security

@@ -60,6 +60,11 @@
                                             <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
                                         </p>
                                     {% endif %}
+                                    {% if todo.completed_at %}
+                                        <p class="todo-completed-at">
+                                            <strong>Completed at:</strong> {{ todo.completed_at.strftime('%Y-%m-%d %H:%M') }}
+                                        </p>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="todo-actions">

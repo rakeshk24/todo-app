@@ -1,36 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo List App</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="container">
+{% extends 'base.html' %}
+{% block title %}My Todos{% endblock %}
+
+{% block content %}
+<div class="container layout-with-sidebar">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <h3 class="sidebar-heading">Projects</h3>
+            <ul class="sidebar-list">
+                <li>
+                    <a href="{{ url_for('todos.index') }}"
+                       class="sidebar-item {% if not active_project and not active_tag %}sidebar-item-active{% endif %}">
+                        All Todos
+                    </a>
+                </li>
+                {% for project in projects %}
+                <li>
+                    <a href="{{ url_for('todos.index', project_id=project.id) }}"
+                       class="sidebar-item {% if active_project and active_project.id == project.id %}sidebar-item-active{% endif %}">
+                        <span class="color-dot" style="background:{{ project.color }};"></span>
+                        {{ project.name }}
+                        <span class="sidebar-count">{{ project.todo_count() }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="sidebar-section">
+            <h3 class="sidebar-heading">Tags</h3>
+            <ul class="sidebar-list">
+                {% for tag in tags %}
+                <li>
+                    <a href="{{ url_for('todos.index', tag_id=tag.id) }}"
+                       class="sidebar-item {% if active_tag and active_tag.id == tag.id %}sidebar-item-active{% endif %}">
+                        <span class="tag-dot" style="background:{{ tag.color }};"></span>
+                        {{ tag.name }}
+                        <span class="sidebar-count">{{ tag.todo_count() }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+                {% if not tags %}
+                <li class="sidebar-empty">No tags yet</li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <div class="sidebar-section bulk-actions">
+            <h3 class="sidebar-heading">Bulk Actions</h3>
+            <form method="POST" action="{{ url_for('todos.bulk_action') }}">
+                {% if active_project %}
+                <input type="hidden" name="project_id" value="{{ active_project.id }}">
+                {% endif %}
+                <input type="hidden" name="action" value="complete_all">
+                <button type="submit" class="btn btn-bulk btn-bulk-complete">Complete All</button>
+            </form>
+            <form method="POST" action="{{ url_for('todos.bulk_action') }}" style="margin-top:8px;">
+                {% if active_project %}
+                <input type="hidden" name="project_id" value="{{ active_project.id }}">
+                {% endif %}
+                <input type="hidden" name="action" value="delete_completed">
+                <button type="submit" class="btn btn-bulk btn-bulk-delete"
+                        onclick="return confirm('Delete all completed todos?')">Delete Completed</button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
         <h1>My Todo List</h1>
+
+        <!-- Active filter banner -->
+        {% if active_project %}
+        <div class="filter-banner">
+            Showing: Project
+            <span class="project-badge">
+                <span class="color-dot" style="background:{{ active_project.color }};"></span>
+                {{ active_project.name }}
+            </span>
+            <a href="{{ url_for('todos.index') }}" class="filter-clear">&times; Clear</a>
+        </div>
+        {% elif active_tag %}
+        <div class="filter-banner">
+            Showing: Tag
+            <span class="tag-pill" style="background:{{ active_tag.color }}; color:#fff;">
+                {{ active_tag.name }}
+            </span>
+            <a href="{{ url_for('todos.index') }}" class="filter-clear">&times; Clear</a>
+        </div>
+        {% endif %}
 
         <!-- Add Todo Form -->
         <div class="add-todo-section">
             <h2>Add New Todo</h2>
-            <form method="POST" action="{{ url_for('add_todo') }}" class="todo-form">
-                <input
-                    type="text"
-                    name="title"
-                    placeholder="Todo title"
-                    required
-                    class="input-field"
-                />
-                <textarea
-                    name="description"
-                    placeholder="Description (optional)"
-                    class="input-field"
-                ></textarea>
-                <input
-                    type="datetime-local"
-                    name="deadline"
-                    class="input-field"
-                />
+            <form method="POST" action="{{ url_for('todos.add_todo') }}" class="todo-form">
+                <input type="text" name="title" placeholder="Todo title" required class="input-field" />
+                <textarea name="description" placeholder="Description (optional)" class="input-field"></textarea>
+                <input type="datetime-local" name="deadline" class="input-field" />
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Project</label>
+                        <select name="project_id" class="input-field">
+                            <option value="">-- No Project --</option>
+                            {% for project in projects %}
+                            <option value="{{ project.id }}"
+                                {% if active_project and active_project.id == project.id %}selected{% endif %}>
+                                {{ project.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                {% if tags %}
+                <div class="form-group">
+                    <label class="form-label">Tags</label>
+                    <input type="text" id="tag-search-add" placeholder="Search tags..." class="input-field tag-search-input" />
+                    <div class="tag-checkboxes" id="tag-checkboxes-add">
+                        {% for tag in tags %}
+                        <label class="tag-checkbox-label" data-tag-name="{{ tag.name | lower }}">
+                            <input type="checkbox" name="tag_ids" value="{{ tag.id }}" />
+                            <span class="tag-pill" style="background:{{ tag.color }}; color:#fff;">{{ tag.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
                 <button type="submit" class="btn btn-primary">Add Todo</button>
             </form>
         </div>
@@ -39,40 +137,54 @@
         <div class="todos-section">
             <h2>Your Todos</h2>
             {% if todos %}
-                <div class="todos-container">
-                    {% for todo in todos %}
-                        <div class="todo-item {% if todo.completed %}completed{% endif %}">
-                            <div class="todo-content">
-                                <a href="{{ url_for('toggle_todo', todo_id=todo.id) }}" class="checkbox">
-                                    <input
-                                        type="checkbox"
-                                        {% if todo.completed %}checked{% endif %}
-                                        disabled
-                                    />
-                                </a>
-                                <div class="todo-text">
-                                    <h3 class="todo-title">{{ todo.title }}</h3>
-                                    {% if todo.description %}
-                                        <p class="todo-description">{{ todo.description }}</p>
-                                    {% endif %}
-                                    {% if todo.deadline %}
-                                        <p class="todo-deadline">
-                                            <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
-                                        </p>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="todo-actions">
-                                <a href="{{ url_for('edit_todo', todo_id=todo.id) }}" class="btn btn-edit">Edit</a>
-                                <a href="{{ url_for('delete_todo', todo_id=todo.id) }}" class="btn btn-delete" onclick="return confirm('Are you sure?')">Delete</a>
+            <div class="todos-container">
+                {% for todo in todos %}
+                {% set is_overdue = todo.deadline and not todo.completed and todo.deadline < now %}
+                <div class="todo-item {% if todo.completed %}completed{% endif %} {% if is_overdue %}overdue{% endif %}">
+                    <div class="todo-content">
+                        <a href="{{ url_for('todos.toggle_todo', todo_id=todo.id) }}" class="checkbox">
+                            <input type="checkbox" {% if todo.completed %}checked{% endif %} disabled />
+                        </a>
+                        <div class="todo-text">
+                            <h3 class="todo-title">
+                                {{ todo.title }}
+                                {% if is_overdue %}
+                                <span class="overdue-badge">Overdue</span>
+                                {% endif %}
+                            </h3>
+                            {% if todo.description %}
+                            <p class="todo-description">{{ todo.description }}</p>
+                            {% endif %}
+                            {% if todo.deadline %}
+                            <p class="todo-deadline">
+                                <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
+                            </p>
+                            {% endif %}
+                            <div class="todo-meta">
+                                {% if todo.project %}
+                                <span class="project-badge">
+                                    <span class="color-dot" style="background:{{ todo.project.color }};"></span>
+                                    {{ todo.project.name }}
+                                </span>
+                                {% endif %}
+                                {% for tag in todo.tags %}
+                                <span class="tag-pill" style="background:{{ tag.color }}; color:#fff;">{{ tag.name }}</span>
+                                {% endfor %}
                             </div>
                         </div>
-                    {% endfor %}
+                    </div>
+                    <div class="todo-actions">
+                        <a href="{{ url_for('todos.edit_todo', todo_id=todo.id) }}" class="btn btn-edit">Edit</a>
+                        <a href="{{ url_for('todos.delete_todo', todo_id=todo.id) }}" class="btn btn-delete"
+                           onclick="return confirm('Are you sure?')">Delete</a>
+                    </div>
                 </div>
+                {% endfor %}
+            </div>
             {% else %}
-                <p class="no-todos">No todos yet. Add one above!</p>
+            <p class="no-todos">No todos yet. Add one above!</p>
             {% endif %}
         </div>
-    </div>
-</body>
-</html>
+    </main>
+</div>
+{% endblock %}

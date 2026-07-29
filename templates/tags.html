@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Tags{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Tags</h1>
+
+    <!-- Add Tag Form -->
+    <div class="add-todo-section">
+        <h2>Add New Tag</h2>
+        <form method="POST" action="{{ url_for('tags.add_tag') }}" class="todo-form">
+            <input type="text" name="name" placeholder="Tag name" required class="input-field" />
+            <div class="form-group">
+                <label class="form-label">Color</label>
+                <input type="color" name="color" value="#28a745" class="input-field color-input" />
+            </div>
+            <button type="submit" class="btn btn-primary">Add Tag</button>
+        </form>
+    </div>
+
+    <!-- Tags List -->
+    <div class="tags-list">
+        <h2>All Tags</h2>
+        {% if tags %}
+        <div class="tags-grid">
+            {% for tag in tags %}
+            <div class="tag-card">
+                <div class="tag-card-left">
+                    <span class="tag-pill large" style="background:{{ tag.color }}; color:#fff;">{{ tag.name }}</span>
+                    <span class="tag-todo-count">{{ tag.todo_count() }} todo{{ 's' if tag.todo_count() != 1 }}</span>
+                </div>
+                <div class="tag-card-actions">
+                    <a href="{{ url_for('todos.index', tag_id=tag.id) }}" class="btn btn-edit">View Todos</a>
+                    <a href="{{ url_for('tags.delete_tag', tag_id=tag.id) }}" class="btn btn-delete"
+                       onclick="return confirm('Delete tag?')">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="no-todos">No tags yet. Create one above!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

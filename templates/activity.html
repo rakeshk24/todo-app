@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Activity Log{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Activity Log</h1>
+    <p class="activity-subtitle">Last 100 actions across todos, projects, and tags.</p>
+
+    {% if entries %}
+    <div class="activity-timeline">
+        {% for entry in entries %}
+        <div class="activity-entry activity-{{ entry.action }}">
+            <div class="activity-icon">
+                {% if entry.action == 'created' %}&#10010;
+                {% elif entry.action == 'updated' %}&#9998;
+                {% elif entry.action == 'completed' %}&#10003;
+                {% elif entry.action == 'deleted' %}&#10005;
+                {% else %}&#8226;
+                {% endif %}
+            </div>
+            <div class="activity-body">
+                <span class="activity-action">{{ entry.action | capitalize }}</span>
+                <span class="activity-type activity-type-{{ entry.entity_type }}">{{ entry.entity_type }}</span>
+                <span class="activity-name">&ldquo;{{ entry.entity_name }}&rdquo;</span>
+                {% if entry.details %}
+                <span class="activity-details">&mdash; {{ entry.details }}</span>
+                {% endif %}
+                <span class="activity-time">{{ entry.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="no-todos">No activity yet. Start creating todos, projects, or tags!</p>
+    {% endif %}
+</div>
+{% endblock %}

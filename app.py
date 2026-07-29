@@ -32,7 +32,7 @@ class Todo(db.Model):
             'description': self.description,
             'deadline': self.deadline.strftime('%Y-%m-%d %H:%M') if self.deadline else None,
             'completed': self.completed,
-            'completed_at': self.completed_at.strftime('%Y-%m-%d %H:%M'),
+            'completed_at': self.completed_at.strftime('%Y-%m-%d %H:%M') if self.completed_at else None,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M')
         }
 

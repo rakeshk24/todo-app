@@ -22,6 +22,7 @@ class Todo(db.Model):
     description = db.Column(db.Text)
     deadline = db.Column(db.DateTime)
     completed = db.Column(db.Boolean, default=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -31,6 +32,7 @@ class Todo(db.Model):
             'description': self.description,
             'deadline': self.deadline.strftime('%Y-%m-%d %H:%M') if self.deadline else None,
             'completed': self.completed,
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M') if self.updated_at else None,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M')
         }
 
@@ -78,6 +80,7 @@ def add_todo():
 def toggle_todo(todo_id):
     todo = Todo.query.get_or_404(todo_id)
     todo.completed = not todo.completed
+    todo.updated_at = datetime.utcnow()
     db.session.commit()
     return redirect(url_for('index'))
 

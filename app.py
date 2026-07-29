@@ -82,6 +82,8 @@ def toggle_todo(todo_id):
     todo.completed = not todo.completed
     if todo.completed:
         todo.completed_at = datetime.now()
+    else:
+        todo.completed_at = None
     db.session.commit()
     return redirect(url_for('index'))
 

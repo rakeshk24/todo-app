@@ -23,6 +23,7 @@ class Todo(db.Model):
     deadline = db.Column(db.DateTime)
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
+    pinned = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -33,6 +34,7 @@ class Todo(db.Model):
             'deadline': self.deadline.strftime('%Y-%m-%d %H:%M') if self.deadline else None,
             'completed': self.completed,
             'completed_at': self.completed_at.strftime('%Y-%m-%d %H:%M') if self.completed_at else None,
+            'pinned': self.pinned,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M')
         }
 
@@ -43,7 +45,7 @@ with app.app_context():
 # Routes
 @app.route('/')
 def index():
-    todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    todos = Todo.query.order_by(db.text("pinned desc, created_at desc")).all()
     return render_template('index.html', todos=todos)
 
 @app.route('/add', methods=['POST'])
@@ -84,6 +86,13 @@ def toggle_todo(todo_id):
         todo.completed_at = datetime.now()
     else:
         todo.completed_at = None
+    db.session.commit()
+    return redirect(url_for('index'))
+
+@app.route('/pin/<int:todo_id>')
+def pin_todo(todo_id):
+    todo = Todo.query.get(todo_id)
+    todo.pinned = not todo.pinned
     db.session.commit()
     return redirect(url_for('index'))
 

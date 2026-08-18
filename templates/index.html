@@ -37,7 +37,10 @@
 
         <!-- Todos List -->
         <div class="todos-section">
-            <h2>Your Todos</h2>
+            <div class="todos-header">
+                <h2>Your Todos</h2>
+                <a href="{{ url_for('clear_completed') }}" class="btn btn-delete" onclick="return confirm('Delete all completed todos?')">Clear Completed</a>
+            </div>
             {% if todos %}
                 <div class="todos-container">
                     {% for todo in todos %}

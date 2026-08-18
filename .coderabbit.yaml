@@ -161,7 +161,7 @@ knowledge_base:
   jira:
     usage: "enabled"
     project_keys:
-      - "XYZ"
+      - "To-Do App"
   chat:
     integrations:
       jira:

@@ -15,7 +15,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Database model
+todo_tags = db.Table(
+    'todo_tags',
+    db.Column('todo_id', db.Integer, db.ForeignKey('todo.id'), primary_key=True),
+    db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True),
+)
+
+
+class Tag(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+
+
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -24,8 +35,16 @@ class Todo(db.Model):
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    tags = db.relationship('Tag', secondary=todo_tags, backref='todos', lazy='subquery')
 
     def to_dict(self):
+        """
+        Serialize the todo item and its tags for external use.
+        
+        Returns:
+        	dict: A dictionary containing todo fields, formatted date and time values,
+        	and tag names.
+        """
         return {
             'id': self.id,
             'title': self.title,
@@ -33,35 +52,97 @@ class Todo(db.Model):
             'deadline': self.deadline.strftime('%Y-%m-%d %H:%M') if self.deadline else None,
             'completed': self.completed,
             'completed_at': self.completed_at.strftime('%Y-%m-%d %H:%M') if self.completed_at else None,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M')
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M'),
+            'tags': [t.name for t in self.tags],
         }
 
 # Create tables
 with app.app_context():
     db.create_all()
 
+def _parse_tags(raw):
+    """Return a deduplicated list of stripped, non-empty tag names from a comma-separated string."""
+    seen = set()
+    result = []
+    for t in raw.split(','):
+        name = t.strip()
+        if name and name not in seen:
+            seen.add(name)
+            result.append(name)
+    return result
+
+
+def _get_or_create_tags(names):
+    """
+    Retrieve existing tags or create tags for names that are not yet stored.
+    
+    Parameters:
+    	names (list[str]): Tag names to retrieve or create.
+    
+    Returns:
+    	list[Tag]: Tags corresponding to the supplied names, preserving their order.
+    """
+    if not names:
+        return []
+    existing = Tag.query.filter(Tag.name.in_(names)).all()
+    existing_by_name = {t.name: t for t in existing}
+    tags = []
+    for name in names:
+        if name in existing_by_name:
+            tags.append(existing_by_name[name])
+        else:
+            tag = Tag(name=name)
+            db.session.add(tag)
+            existing_by_name[name] = tag
+            tags.append(tag)
+    return tags
+
+
 # Routes
 @app.route('/')
 def index():
-    todos = Todo.query.order_by(Todo.created_at.desc()).all()
-    return render_template('index.html', todos=todos)
+    """
+    Render the todo list, optionally filtered by an exact tag name.
+    
+    Returns:
+        Rendered index page containing the todos, available tags, and active tag filter.
+    """
+    tag_filter = request.args.get('tag', '').strip()
+    all_tags = Tag.query.order_by(Tag.name).all()
+
+    if tag_filter:
+        todos = (
+            Todo.query
+            .join(Todo.tags)
+            .filter(Tag.name == tag_filter)
+            .order_by(Todo.created_at.desc())
+            .all()
+        )
+    else:
+        todos = Todo.query.order_by(Todo.created_at.desc()).all()
+
+    return render_template('index.html', todos=todos, all_tags=all_tags, active_tag=tag_filter)
 
 @app.route('/add', methods=['POST'])
 def add_todo():
+    """
+    Create a todo from submitted form data and redirect to the todo list.
+    
+    Invalid deadline values are ignored, and a missing deadline defaults to the
+    current date at midnight.
+    
+    Returns:
+        A redirect response to the todo list.
+    """
     title = request.form.get('title')
     description = request.form.get('description')
     deadline = request.form.get('deadline')
+    raw_tags = request.form.get('tags', '')
 
     if not title:
         return redirect(url_for('index'))
 
     deadline_obj = None
-    # if deadline:
-    #     try:
-    #         deadline_obj = datetime.strptime(deadline, '%Y-%m-%dT%H:%M')
-    #     except ValueError:
-    #         pass
-
     if deadline:
         try:
             deadline_obj = datetime.strptime(deadline, '%Y-%m-%dT%H:%M')
@@ -71,6 +152,7 @@ def add_todo():
         deadline_obj = datetime.strptime(get_today_date(), '%Y-%m-%d')
 
     new_todo = Todo(title=title, description=description, deadline=deadline_obj)
+    new_todo.tags = _get_or_create_tags(_parse_tags(raw_tags))
     db.session.add(new_todo)
     db.session.commit()
 
@@ -96,12 +178,22 @@ def delete_todo(todo_id):
 
 @app.route('/edit/<int:todo_id>', methods=['GET', 'POST'])
 def edit_todo(todo_id):
+    """
+    Edit an existing todo or render its edit form.
+    
+    Parameters:
+        todo_id (int): Identifier of the todo to edit.
+    
+    Returns:
+        A redirect to the index after a successful update, or the edit form for a GET request.
+    """
     todo = Todo.query.get_or_404(todo_id)
 
     if request.method == 'POST':
         todo.title = request.form.get('title', todo.title)
         todo.description = request.form.get('description', todo.description)
         deadline = request.form.get('deadline')
+        raw_tags = request.form.get('tags', '')
 
         if deadline:
             try:
@@ -111,6 +203,7 @@ def edit_todo(todo_id):
         else:
             todo.deadline = None
 
+        todo.tags = _get_or_create_tags(_parse_tags(raw_tags))
         db.session.commit()
         return redirect(url_for('index'))
 

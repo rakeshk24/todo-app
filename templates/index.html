@@ -31,9 +31,28 @@
                     name="deadline"
                     class="input-field"
                 />
+                <input
+                    type="text"
+                    name="tags"
+                    placeholder="Tags (comma-separated, e.g. work, urgent)"
+                    class="input-field"
+                />
                 <button type="submit" class="btn btn-primary">Add Todo</button>
             </form>
         </div>
+
+        <!-- Tag Filter -->
+        {% if all_tags %}
+        <div class="tag-filter-section">
+            <a href="{{ url_for('index') }}" class="tag-pill {% if not active_tag %}tag-pill-active{% endif %}">All</a>
+            {% for tag in all_tags %}
+                <a href="{{ url_for('index', tag=tag.name) }}"
+                   class="tag-pill {% if active_tag == tag.name %}tag-pill-active{% endif %}">
+                    {{ tag.name }}
+                </a>
+            {% endfor %}
+        </div>
+        {% endif %}
 
         <!-- Todos List -->
         <div class="todos-section">
@@ -52,6 +71,13 @@
                                 </a>
                                 <div class="todo-text">
                                     <h3 class="todo-title">{{ todo.title }}</h3>
+                                    {% if todo.tags %}
+                                        <div class="todo-tags">
+                                            {% for tag in todo.tags %}
+                                                <a href="{{ url_for('index', tag=tag.name) }}" class="tag-pill tag-pill-small">{{ tag.name }}</a>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                     {% if todo.description %}
                                         <p class="todo-description">{{ todo.description }}</p>
                                     {% endif %}

@@ -110,7 +110,9 @@ reviews:
     title:
       mode: off
     description:
-      mode: off  
+      mode: off
+    issue_assessment:
+      mode: error  
     custom_checks:
       - name: "PII and sensitive data in logs"
         mode: "warning"

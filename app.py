@@ -38,6 +38,13 @@ class Todo(db.Model):
     tags = db.relationship('Tag', secondary=todo_tags, backref='todos', lazy='subquery')
 
     def to_dict(self):
+        """
+        Serialize the todo item and its tags for external use.
+        
+        Returns:
+        	dict: A dictionary containing todo fields, formatted date and time values,
+        	and tag names.
+        """
         return {
             'id': self.id,
             'title': self.title,
@@ -66,6 +73,15 @@ def _parse_tags(raw):
 
 
 def _get_or_create_tags(names):
+    """
+    Retrieve existing tags or create tags for names that are not yet stored.
+    
+    Parameters:
+    	names (list[str]): Tag names to retrieve or create.
+    
+    Returns:
+    	list[Tag]: Tags corresponding to the supplied names, preserving their order.
+    """
     if not names:
         return []
     existing = Tag.query.filter(Tag.name.in_(names)).all()
@@ -85,6 +101,12 @@ def _get_or_create_tags(names):
 # Routes
 @app.route('/')
 def index():
+    """
+    Render the todo list, optionally filtered by an exact tag name.
+    
+    Returns:
+        Rendered index page containing the todos, available tags, and active tag filter.
+    """
     tag_filter = request.args.get('tag', '').strip()
     all_tags = Tag.query.order_by(Tag.name).all()
 
@@ -103,6 +125,15 @@ def index():
 
 @app.route('/add', methods=['POST'])
 def add_todo():
+    """
+    Create a todo from submitted form data and redirect to the todo list.
+    
+    Invalid deadline values are ignored, and a missing deadline defaults to the
+    current date at midnight.
+    
+    Returns:
+        A redirect response to the todo list.
+    """
     title = request.form.get('title')
     description = request.form.get('description')
     deadline = request.form.get('deadline')
@@ -147,6 +178,15 @@ def delete_todo(todo_id):
 
 @app.route('/edit/<int:todo_id>', methods=['GET', 'POST'])
 def edit_todo(todo_id):
+    """
+    Edit an existing todo or render its edit form.
+    
+    Parameters:
+        todo_id (int): Identifier of the todo to edit.
+    
+    Returns:
+        A redirect to the index after a successful update, or the edit form for a GET request.
+    """
     todo = Todo.query.get_or_404(todo_id)
 
     if request.method == 'POST':

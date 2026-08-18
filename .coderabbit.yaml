@@ -137,6 +137,21 @@ reviews:
           - Authentication or authorization checks bypassed on endpoints or workflow steps
           - REST integration credentials stored in plain text rather than the GW credential store
           - TLS verification disabled on outbound HTTP integrations
+  finishing_touches:
+    custom:
+      - name: harden security
+        enabled: true
+        instructions: |
+          Review only the files changed in this pull request.
+          Improve security by:
+          - removing hardcoded secrets or sensitive data and using env/config patterns
+          - redacting sensitive values from logs
+          - validating and sanitizing untrusted input
+          - preventing unsafe use of input in queries, commands, or templates
+          - ensuring proper authentication and authorization checks
+          - enforcing least-privilege access and preventing cross-user/tenant access
+          Follow existing project patterns for logging, validation, and auth.
+          Keep changes minimal and scoped to the PR. Do not refactor unrelated code
 
 knowledge_base:
   code_guidelines:

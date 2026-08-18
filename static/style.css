@@ -250,3 +250,45 @@ textarea.input-field {
         flex: 1;
     }
 }
+
+/* Tags */
+.tag-filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.tag-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #e9ecef;
+    color: #495057;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+}
+
+.tag-pill:hover {
+    background: #764ba2;
+    color: #fff;
+}
+
+.tag-pill-active {
+    background: #764ba2;
+    color: #fff;
+}
+
+.todo-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.tag-pill-small {
+    padding: 2px 8px;
+    font-size: 0.72rem;
+}

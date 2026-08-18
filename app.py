@@ -54,18 +54,31 @@ with app.app_context():
     db.create_all()
 
 def _parse_tags(raw):
-    """Return a list of stripped, non-empty tag names from a comma-separated string."""
-    return [t.strip() for t in raw.split(',') if t.strip()]
+    """Return a deduplicated list of stripped, non-empty tag names from a comma-separated string."""
+    seen = set()
+    result = []
+    for t in raw.split(','):
+        name = t.strip()
+        if name and name not in seen:
+            seen.add(name)
+            result.append(name)
+    return result
 
 
 def _get_or_create_tags(names):
+    if not names:
+        return []
+    existing = Tag.query.filter(Tag.name.in_(names)).all()
+    existing_by_name = {t.name: t for t in existing}
     tags = []
     for name in names:
-        tag = Tag.query.filter_by(name=name).first()
-        if tag is None:
+        if name in existing_by_name:
+            tags.append(existing_by_name[name])
+        else:
             tag = Tag(name=name)
             db.session.add(tag)
-        tags.append(tag)
+            existing_by_name[name] = tag
+            tags.append(tag)
     return tags
 
 

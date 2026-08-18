@@ -1,34 +1,131 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+enable_free_tier: false
+early_access: false
+
 reviews:
-  high_level_summary_instructions: >-
-    Create a concise high-level summary as a bullet-point list. Then include a Markdown table
-    showing lines added and removed by each contributing author
   poem: false
-  review_details: true
+  review_details: true #default: false
+  profile: chill
+  request_changes_workflow: false #default: false
+  review_status: true #default: true
+  high_level_summary_instructions: >-
+    Divide the summary into five sections:
+    1. **📝 Description**: Describe the main change in the pull request in 50-60 words max. Explain why this pull
+    request is needed, why is this the best solution and what was done.
+
+    2. **📓 References**: A list of links to discussions, issues and pull requests related to the changes. You can look
+    up for documentation, issues, or other pull requests that provide context or background for the changes.
+
+    3. **📦 Dependencies & Requirements**: List any new dependencies added or updated. Mention environment variable
+    changes, configuration updates, or version requirements.
+
+    4. **📊 Contributor Summary**: A table showing contributions (lines of code added, removed, files changed) made by
+    the contributor in this pull request. Format: `| Contributor | Lines Added | Lines Removed | Files Changed |`
+
+    Use bullet points or numbered lists for clarity. Keep it short and each section should be no more than 200 words.
+    The Changes Summary table should be concise with only essential file paths (relative to repo root).
+  suggested_labels: true
+  auto_apply_labels: true #default: false
+  labeling_instructions:
+    - label: database
+      instructions: Apply when the PR includes schema changes or inline migrations such as ALTER TABLE statements.  
+  suggested_reviewers: true #default: true
+  auto_assign_reviewers: false #default: false
+  suggested_reviewers_instructions:
+    - reviewers:
+        - handle: xyz
+          type: user
+        - handle: abc
+          type: group
+      instructions: "Assign when a PR modifies or adds sensitive fields (password, token, api_key, secret) to registry-serialized models, removes error handling around OpenKey/QueryValueEx/DeleteKey, or changes how registry handles are opened or closed"
+  path_filters:
+    - '!**/*.bin'
+    - '!**/*.zip'
+    - '!**/*.7z'
+    - '!**/*.jar'
+    - '!**/*.tar'
+    - '!**/*.mp3'
+    - '!**/*.jpeg'
   path_instructions:
-    - path: '**/*'
+    - path: "**/*"
       instructions: |
-                - Ignore minor or stylistic concerns.
-                - Restrict feedback to errors, security risks, or functionality-breaking problems.
-                - Do not post comments on code style, formatting, or non-critical
-                  improvements.
-                - Keep reviews short: flag only issues that make the PR unsafe to merge.
-                - Limit review comments to 5 items maximum, unless additional blockers exist.
-                - Group similar issues into a single comment instead of posting multiple notes.
-                - Skip repetition — if a pattern repeats, mention it once at a summary
-                  level only.
-                - Do not add general suggestions, focus strictly on merge-blocking
-                  concerns.
-                - If there are no critical problems, respond with minimal approval
-                  (e.g., 'Looks good'). Do not add additional review.
-                - Avoid line-by-line commentary unless it highlights a critical bug or security hole.
-                - Highlight only issues that could cause runtime errors, data loss, or severe maintainability issues.
-                - Ignore minor optimization opportunities — focus solely on correctness and safety.
-                - Provide a top-level summary of critical blockers rather than detailed per-line notes.
-                - When in doubt, err on the side of fewer comments — brevity and
-                  blocking issues only.
+        Perform an exhaustive and highly thorough code review.
+        Simulate a meticulous human reviewer who checks everything before production.
+        Prioritize completeness over brevity. If uncertain about a potential issue, include it as a possible concern.
+
+        1. Bugs & Correctness
+           - logical errors, incorrect assumptions, off-by-one errors
+           - race conditions and failure handling
+           - null/uninitialized object access — entity navigations across relationships can return null
+             for draft, cancelled, or partially-created records regardless of language
+           - type/enum comparisons using display labels or locale-sensitive strings instead of codes or constants —
+             these silently fail in non-English or multi-locale environments
+           - date arithmetic that conflates date-only and datetime types — produces incorrect offsets at timezone boundaries
+
+        2. Risk & Breaking Changes — side effects in other parts of the repo
+           - backward compatibility, API contract changes, schema changes
+           - if a shared service, manager, or utility method is modified, identify all callers across the repo
+             and flag any whose behavior could silently change — do not limit this to the directly modified file
+           - if a shared abstraction (interface, base class, mixin, trait) changes, flag all implementations
+             and call sites — callers in other modules or languages will not always surface this at compile time
+           - if an entity field or data model element is added, renamed, or removed, flag every layer that
+             references it: service classes, query builders, UI components, serialization mappings, and tests
+           - if a typekey, enum, or lookup value is added or removed, flag all switch/match/if-else chains
+             that enumerate it — missing cases produce silent no-ops, not errors
+           - if a validation rule set or workflow step changes, flag all entry points that trigger it:
+             UI submission, REST handlers, and batch jobs may each invoke it independently
+
+        3. Code Quality
+           - duplication, dead code, unnecessary complexity, poor naming, hidden coupling
+
+        4. Maintainability & Design
+           - class/function decomposition, separation of concerns, readability
+           - extensibility concerns, adherence to DRY and SOLID
+
+        5. Testing — missing coverage
+           - any new public method or changed business logic without a corresponding test
+           - changes to a plugin or integration (messaging, batch, external API) with no updated test
+             covering the changed code path
+           - new validation rules or workflow steps with no test that exercises the failing condition —
+             a test covering only the happy path is insufficient
+           - changes to UI expressions or conditional rendering with no scenario or integration test
+           - weak assertions, untested edge cases, missing regression tests
+
+        6. Security
+           - injection risks, unsafe patterns, exposed secrets, insecure defaults, auth/authz mistakes
+           - vulnerable dependencies
+
+        7. Performance & Edge Cases
+           - inefficiencies, redundant work, unnecessary allocations
+           - queries with no result-size limit on tables that grow unboundedly (e.g. Claim, Activity,
+             PolicyPeriod) — these pass in dev with small datasets and fail in production
+           - logic that assumes a specific entity or workflow state without asserting it — the same
+             code path is often reachable from multiple states and will behave incorrectly in others
+           - missing handling for empty collections, zero values, boundary dates, or concurrent modification
+
   pre_merge_checks:
+    docstrings:
+      mode: off
+    title:
+      mode: off
+    description:
+      mode: off  
     custom_checks:
+      - name: "PII and sensitive data in logs"
+        mode: "warning"
+        instructions: |
+          Fail if any log statement (Logger.info, Logger.debug, Logger.error, print, system.out)
+          outputs fields that contain PII or regulated insurance data, including:
+          - SSN, TaxID, or government ID numbers
+          - Date of birth, age, or gender
+          - Driver's license or VIN
+          - Health diagnosis codes, injury descriptions, or medical record references
+          - Financial account numbers, payment card data, or bank routing numbers
+          - Full name combined with address, phone, or email (combined PII)
+          Pass only if the logged value is explicitly masked, tokenized, or is a non-PII identifier
+          with no attached personal fields.
+
       - name: "Security checks"
         mode: "warning"
         instructions: |
@@ -37,36 +134,20 @@ reviews:
           - User-supplied input passed directly to a query, eval, or shell call without sanitization
           - Authentication or authorization checks bypassed on endpoints or workflow steps
           - REST integration credentials stored in plain text rather than the GW credential store
-          - TLS verification disabled on outbound HTTP integrations  
-  finishing_touches:
-    custom:
-      - name: harden security
-        enabled: true
-        instructions: |
-          Review only the files changed in this pull request.
-          Improve security by:
-          - removing hardcoded secrets or sensitive data and using env/config patterns
-          - redacting sensitive values from logs
-          - validating and sanitizing untrusted input
-          - preventing unsafe use of input in queries, commands, or templates
-          - ensuring proper authentication and authorization checks
-          - enforcing least-privilege access and preventing cross-user/tenant access
-          Follow existing project patterns for logging, validation, and auth.
-          Keep changes minimal and scoped to the PR. Do not refactor unrelated code.
+          - TLS verification disabled on outbound HTTP integrations
+
 knowledge_base:
   code_guidelines:
     filePatterns:
       - "**/CODING_GUIDELINES.md"
+  automatic_repository_linking: true #default: false
   jira:
     usage: "enabled"
     project_keys:
-      - "To-Do App"
+      - "XYZ"
+  chat:
+    integrations:
+      jira:
+        usage: "enabled"
   mcp:
-    usage: enabled
-chat:
-  integrations:
-    jira:
-      usage: "enabled"
-issue_enrichment:
-  planning:
-    enabled: true
+    usage: "enabled"

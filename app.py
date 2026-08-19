@@ -44,6 +44,8 @@ class Comment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     todo = db.relationship('Todo', backref=db.backref('comments', lazy=True))
 
+MAX_COMMENT_LENGTH = 500
+
 # Create tables
 with app.app_context():
     db.create_all()
@@ -62,10 +64,12 @@ def add_comment(todo_id):
     todo = Todo.query.get_or_404(todo_id)
     comment_text = request.form.get('comment', '').strip()
 
-    print(f"Comment on todo '{todo.title}': '{comment_text}', from IP {request.remote_addr}")
-
-    if not comment_text:
+    if not comment_text or len(comment_text) > MAX_COMMENT_LENGTH:
         return redirect(url_for('index'))
+
+    # Strip control characters before logging to prevent log injection/forging
+    safe_comment_log = comment_text.replace('\n', ' ').replace('\r', ' ')
+    print(f"Comment on todo {todo_id} from IP {request.remote_addr}: '{safe_comment_log}'")
 
     comment = Comment(todo_id=todo_id, text=comment_text)
     try:

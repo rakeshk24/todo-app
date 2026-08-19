@@ -103,7 +103,14 @@
     <script>
         function previewComment(todoId, text) {
             var preview = document.getElementById('comment-preview-' + todoId);
-            preview.innerHTML = text ? '<em>Preview: </em>' + text : '';
+            preview.textContent = '';
+            if (!text) {
+                return;
+            }
+            var label = document.createElement('em');
+            label.textContent = 'Preview: ';
+            preview.appendChild(label);
+            preview.appendChild(document.createTextNode(text));
         }
     </script>
 </body>

@@ -53,7 +53,8 @@ with app.app_context():
 def index():
     todos = Todo.query.order_by(Todo.created_at.desc()).all()
     for todo in todos:
-        todo.comment_list = Comment.query.filter_by(todo_id=todo.id).all()
+        todo.comment_list = Comment.query.filter_by(todo_id=todo.id) \
+            .order_by(Comment.created_at.asc()).limit(50).all()
     return render_template('index.html', todos=todos)
 
 

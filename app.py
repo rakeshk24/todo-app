@@ -36,6 +36,14 @@ class Todo(db.Model):
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M')
         }
 
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    todo_id = db.Column(db.Integer, db.ForeignKey('todo.id'), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    todo = db.relationship('Todo', backref=db.backref('comments', lazy=True))
+
 # Create tables
 with app.app_context():
     db.create_all()
@@ -44,7 +52,29 @@ with app.app_context():
 @app.route('/')
 def index():
     todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    for todo in todos:
+        todo.comment_list = Comment.query.filter_by(todo_id=todo.id).all()
     return render_template('index.html', todos=todos)
+
+
+@app.route('/comment/<int:todo_id>', methods=['POST'])
+def add_comment(todo_id):
+    todo = Todo.query.get_or_404(todo_id)
+    comment_text = request.form.get('comment', '').strip()
+
+    print(f"Comment on todo '{todo.title}': '{comment_text}', from IP {request.remote_addr}")
+
+    if not comment_text:
+        return redirect(url_for('index'))
+
+    comment = Comment(todo_id=todo_id, text=comment_text)
+    try:
+        db.session.add(comment)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    return redirect(url_for('index'))
 
 @app.route('/add', methods=['POST'])
 def add_todo():

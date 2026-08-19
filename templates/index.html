@@ -42,34 +42,55 @@
                 <div class="todos-container">
                     {% for todo in todos %}
                         <div class="todo-item {% if todo.completed %}completed{% endif %}">
-                            <div class="todo-content">
-                                <a href="{{ url_for('toggle_todo', todo_id=todo.id) }}" class="checkbox">
-                                    <input
-                                        type="checkbox"
-                                        {% if todo.completed %}checked{% endif %}
-                                        disabled
-                                    />
-                                </a>
-                                <div class="todo-text">
-                                    <h3 class="todo-title">{{ todo.title }}</h3>
-                                    {% if todo.description %}
-                                        <p class="todo-description">{{ todo.description }}</p>
-                                    {% endif %}
-                                    {% if todo.deadline %}
-                                        <p class="todo-deadline">
-                                            <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
-                                        </p>
-                                    {% endif %}
-                                    {% if todo.completed_at %}
-                                        <p class="todo-completed-at">
-                                            <strong>Completed at:</strong> {{ todo.completed_at.strftime('%Y-%m-%d %H:%M') }}
-                                        </p>
-                                    {% endif %}
+                            <div class="todo-main-row">
+                                <div class="todo-content">
+                                    <a href="{{ url_for('toggle_todo', todo_id=todo.id) }}" class="checkbox">
+                                        <input
+                                            type="checkbox"
+                                            {% if todo.completed %}checked{% endif %}
+                                            disabled
+                                        />
+                                    </a>
+                                    <div class="todo-text">
+                                        <h3 class="todo-title">{{ todo.title }}</h3>
+                                        {% if todo.description %}
+                                            <p class="todo-description">{{ todo.description }}</p>
+                                        {% endif %}
+                                        {% if todo.deadline %}
+                                            <p class="todo-deadline">
+                                                <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
+                                            </p>
+                                        {% endif %}
+                                        {% if todo.completed_at %}
+                                            <p class="todo-completed-at">
+                                                <strong>Completed at:</strong> {{ todo.completed_at.strftime('%Y-%m-%d %H:%M') }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="todo-actions">
+                                    <a href="{{ url_for('edit_todo', todo_id=todo.id) }}" class="btn btn-edit">Edit</a>
+                                    <a href="{{ url_for('delete_todo', todo_id=todo.id) }}" class="btn btn-delete" onclick="return confirm('Are you sure?')">Delete</a>
                                 </div>
                             </div>
-                            <div class="todo-actions">
-                                <a href="{{ url_for('edit_todo', todo_id=todo.id) }}" class="btn btn-edit">Edit</a>
-                                <a href="{{ url_for('delete_todo', todo_id=todo.id) }}" class="btn btn-delete" onclick="return confirm('Are you sure?')">Delete</a>
+                            <div class="comments-section">
+                                {% for c in todo.comment_list %}
+                                <div class="comment-item">
+                                    <span class="comment-text">{{ c.text }}</span>
+                                    <span class="comment-time">{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                </div>
+                                {% endfor %}
+                                <form class="comment-form" method="POST" action="{{ url_for('add_comment', todo_id=todo.id) }}">
+                                    <input
+                                        type="text"
+                                        name="comment"
+                                        class="comment-input"
+                                        placeholder="Add a comment..."
+                                        oninput="previewComment({{ todo.id }}, this.value)"
+                                    />
+                                    <button type="submit" class="btn btn-comment">Add</button>
+                                </form>
+                                <div id="comment-preview-{{ todo.id }}" class="comment-preview"></div>
                             </div>
                         </div>
                     {% endfor %}
@@ -79,5 +100,11 @@
             {% endif %}
         </div>
     </div>
+    <script>
+        function previewComment(todoId, text) {
+            var preview = document.getElementById('comment-preview-' + todoId);
+            preview.innerHTML = text ? '<em>Preview: </em>' + text : '';
+        }
+    </script>
 </body>
 </html>

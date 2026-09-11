@@ -221,6 +221,31 @@ textarea.input-field {
     font-size: 1.1em;
 }
 
+/* Tags */
+.todo-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.tag {
+    background: #667eea;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.tag-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 24px;
+}
+
 /* Responsive Design */
 @media (max-width: 600px) {
     .container {

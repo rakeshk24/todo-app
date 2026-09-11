@@ -31,6 +31,14 @@
                     name="deadline"
                     class="input-field"
                 />
+                <input
+                    type="text"
+                    id="tags-input"
+                    name="tags"
+                    placeholder="Tags (comma-separated, e.g. work, urgent)"
+                    class="input-field"
+                />
+                <div id="tag-preview" class="tag-preview"></div>
                 <button type="submit" class="btn btn-primary">Add Todo</button>
             </form>
         </div>
@@ -54,6 +62,13 @@
                                     <h3 class="todo-title">{{ todo.title }}</h3>
                                     {% if todo.description %}
                                         <p class="todo-description">{{ todo.description }}</p>
+                                    {% endif %}
+                                    {% if todo.tags %}
+                                        <div class="todo-tags">
+                                            {% for tag in todo.tags %}
+                                                <span class="tag">{{ tag.name }}</span>
+                                            {% endfor %}
+                                        </div>
                                     {% endif %}
                                     {% if todo.deadline %}
                                         <p class="todo-deadline">
@@ -79,5 +94,18 @@
             {% endif %}
         </div>
     </div>
+
+    <script>
+        document.getElementById('tags-input').addEventListener('input', function() {
+            var preview = document.getElementById('tag-preview');
+            preview.innerHTML = '';
+            this.value.split(',').forEach(function(tag) {
+                var t = tag.trim();
+                if (t) {
+                    preview.innerHTML += '<span class="tag">' + t + '</span>';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

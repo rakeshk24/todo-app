@@ -35,11 +35,21 @@
             </form>
         </div>
 
+        <!-- Search -->
+        <div class="search-section">
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Search todos..."
+                class="input-field search-input"
+            />
+        </div>
+
         <!-- Todos List -->
         <div class="todos-section">
             <h2>Your Todos</h2>
             {% if todos %}
-                <div class="todos-container">
+                <div class="todos-container" id="todos-container">
                     {% for todo in todos %}
                         <div class="todo-item {% if todo.completed %}completed{% endif %}">
                             <div class="todo-content">
@@ -75,9 +85,44 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <p class="no-todos">No todos yet. Add one above!</p>
+                <p class="no-todos" id="todos-container">No todos yet. Add one above!</p>
             {% endif %}
         </div>
     </div>
+
+    <script>
+        var searchInput = document.getElementById('search-input');
+        var todosContainer = document.getElementById('todos-container');
+        var originalContent = todosContainer ? todosContainer.innerHTML : '';
+
+        searchInput.addEventListener('input', function() {
+            var q = this.value.trim();
+            if (!q) {
+                todosContainer.innerHTML = originalContent;
+                return;
+            }
+            fetch('/search?q=' + encodeURIComponent(q))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.length === 0) {
+                        todosContainer.innerHTML = '<p class="no-todos">No matching todos.</p>';
+                        return;
+                    }
+                    todosContainer.innerHTML = data.map(function(todo) {
+                        var html = '<div class="todo-item">';
+                        html += '<div class="todo-content"><div class="todo-text">';
+                        html += '<h3 class="todo-title">' + todo.title + '</h3>';
+                        if (todo.description) {
+                            html += '<p class="todo-description">' + todo.description + '</p>';
+                        }
+                        if (todo.deadline) {
+                            html += '<p class="todo-deadline"><strong>Deadline:</strong> ' + todo.deadline + '</p>';
+                        }
+                        html += '</div></div></div>';
+                        return html;
+                    }).join('');
+                });
+        });
+    </script>
 </body>
 </html>

@@ -130,6 +130,15 @@ textarea.input-field {
     gap: 10px;
 }
 
+/* Search */
+.search-section {
+    margin-bottom: 20px;
+}
+
+.search-input {
+    width: 100%;
+}
+
 /* Todos Section */
 .todos-section {
     margin-top: 30px;

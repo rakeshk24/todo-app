@@ -40,7 +40,26 @@ class Todo(db.Model):
 with app.app_context():
     db.create_all()
 
+def search_todos_query(query):
+    if query:
+        results = Todo.query.filter(
+            db.or_(
+                Todo.title.ilike(f'%{query}%'),
+                Todo.description.ilike(f'%{query}%')
+            )
+        ).order_by(Todo.created_at.desc()).all()
+    else:
+        results = Todo.query.order_by(Todo.created_at.desc()).all()
+    return results
+
 # Routes
+@app.route('/search')
+def search():
+    query = request.args.get('q', '')
+    results = search_todos_query(query)
+    print(f"Search from {request.remote_addr}: q='{query}', {len(results)} results")
+    return jsonify([t.to_dict() for t in results])
+
 @app.route('/')
 def index():
     todos = Todo.query.order_by(Todo.created_at.desc()).all()

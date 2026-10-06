@@ -40,30 +40,34 @@ class Todo(db.Model):
 with app.app_context():
     db.create_all()
 
+SEARCH_RESULT_LIMIT = 50
+
+
 def search_todos_query(query):
+    todos = Todo.query
     if query:
-        results = Todo.query.filter(
+        escaped_query = query.replace('!', '!!').replace('%', '!%').replace('_', '!_')
+        pattern = f'%{escaped_query}%'
+        todos = todos.filter(
             db.or_(
-                Todo.title.ilike(f'%{query}%'),
-                Todo.description.ilike(f'%{query}%')
+                Todo.title.ilike(pattern, escape='!'),
+                Todo.description.ilike(pattern, escape='!')
             )
-        ).order_by(Todo.created_at.desc()).all()
-    else:
-        results = Todo.query.order_by(Todo.created_at.desc()).all()
-    return results
+        )
+    return todos.order_by(Todo.created_at.desc(), Todo.id.desc()).limit(SEARCH_RESULT_LIMIT).all()
 
 # Routes
 @app.route('/search')
 def search():
     query = request.args.get('q', '')
     results = search_todos_query(query)
-    print(f"Search from {request.remote_addr}: q='{query}', {len(results)} results")
+    app.logger.info('Search returned %s results', len(results))
     return jsonify([t.to_dict() for t in results])
 
 @app.route('/')
 def index():
-    todos = Todo.query.order_by(Todo.created_at.desc()).all()
-    return render_template('index.html', todos=todos)
+    todos = search_todos_query('')
+    return render_template('index.html', todos=todos, search_result_limit=SEARCH_RESULT_LIMIT)
 
 @app.route('/add', methods=['POST'])
 def add_todo():

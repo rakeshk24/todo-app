@@ -40,6 +40,8 @@
             <input
                 type="text"
                 id="search-input"
+                aria-label="Search todos"
+                aria-describedby="search-limit"
                 placeholder="Search todos..."
                 class="input-field search-input"
             />
@@ -48,8 +50,10 @@
         <!-- Todos List -->
         <div class="todos-section">
             <h2>Your Todos</h2>
+            <p id="search-limit">Showing up to {{ search_result_limit }} newest todos.
+                Search to narrow the results.</p>
+            <div class="todos-container" id="todos-container" aria-live="polite">
             {% if todos %}
-                <div class="todos-container" id="todos-container">
                     {% for todo in todos %}
                         <div class="todo-item {% if todo.completed %}completed{% endif %}">
                             <div class="todo-content">
@@ -83,46 +87,93 @@
                             </div>
                         </div>
                     {% endfor %}
-                </div>
             {% else %}
-                <p class="no-todos" id="todos-container">No todos yet. Add one above!</p>
+                <p class="no-todos">No todos yet. Add one above!</p>
             {% endif %}
+            </div>
         </div>
     </div>
 
     <script>
-        var searchInput = document.getElementById('search-input');
-        var todosContainer = document.getElementById('todos-container');
-        var originalContent = todosContainer ? todosContainer.innerHTML : '';
+        (() => {
+            const searchInput = document.getElementById('search-input');
+            const todosContainer = document.getElementById('todos-container');
+            const originalNodes = Array.from(todosContainer.childNodes);
+            let requestSequence = 0;
 
-        searchInput.addEventListener('input', function() {
-            var q = this.value.trim();
-            if (!q) {
-                todosContainer.innerHTML = originalContent;
-                return;
+            function element(tag, className, text) {
+                const node = document.createElement(tag);
+                node.className = className;
+                if (text !== undefined) node.textContent = text;
+                return node;
             }
-            fetch('/search?q=' + encodeURIComponent(q))
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    if (data.length === 0) {
-                        todosContainer.innerHTML = '<p class="no-todos">No matching todos.</p>';
-                        return;
+
+            function renderTodo(todo) {
+                const item = element('div', 'todo-item' + (todo.completed ? ' completed' : ''));
+                const content = element('div', 'todo-content');
+                const toggle = element('a', 'checkbox');
+                toggle.href = '/toggle/' + encodeURIComponent(todo.id);
+                toggle.setAttribute('aria-label', todo.completed ? 'Mark incomplete' : 'Mark complete');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = todo.completed;
+                checkbox.disabled = true;
+                toggle.append(checkbox);
+
+                const text = element('div', 'todo-text');
+                text.append(element('h3', 'todo-title', todo.title));
+                if (todo.description) {
+                    text.append(element('p', 'todo-description', todo.description));
+                }
+                for (const [value, className, label] of [
+                    [todo.deadline, 'todo-deadline', 'Deadline:'],
+                    [todo.completed_at, 'todo-completed-at', 'Completed at:']
+                ]) {
+                    if (value) {
+                        const date = element('p', className);
+                        date.append(element('strong', '', label), element('span', '', ' ' + value));
+                        text.append(date);
                     }
-                    todosContainer.innerHTML = data.map(function(todo) {
-                        var html = '<div class="todo-item">';
-                        html += '<div class="todo-content"><div class="todo-text">';
-                        html += '<h3 class="todo-title">' + todo.title + '</h3>';
-                        if (todo.description) {
-                            html += '<p class="todo-description">' + todo.description + '</p>';
-                        }
-                        if (todo.deadline) {
-                            html += '<p class="todo-deadline"><strong>Deadline:</strong> ' + todo.deadline + '</p>';
-                        }
-                        html += '</div></div></div>';
-                        return html;
-                    }).join('');
+                }
+                content.append(toggle, text);
+
+                const actions = element('div', 'todo-actions');
+                const edit = element('a', 'btn btn-edit', 'Edit');
+                edit.href = '/edit/' + encodeURIComponent(todo.id);
+                const remove = element('a', 'btn btn-delete', 'Delete');
+                remove.href = '/delete/' + encodeURIComponent(todo.id);
+                remove.addEventListener('click', function(event) {
+                    if (!confirm('Are you sure?')) event.preventDefault();
                 });
-        });
+                actions.append(edit, remove);
+                item.append(content, actions);
+                return item;
+            }
+
+            searchInput.addEventListener('input', async function() {
+                const sequence = ++requestSequence;
+                const query = this.value.trim();
+                if (!query) {
+                    todosContainer.replaceChildren(...originalNodes);
+                    return;
+                }
+                todosContainer.replaceChildren(element('p', 'no-todos', 'Searching…'));
+                try {
+                    const response = await fetch('/search?q=' + encodeURIComponent(query));
+                    if (!response.ok) throw new Error('Search failed');
+                    const data = await response.json();
+                    if (sequence !== requestSequence) return;
+                    todosContainer.replaceChildren(...(data.length
+                        ? data.map(renderTodo)
+                        : [element('p', 'no-todos', 'No matching todos.')]));
+                } catch (error) {
+                    if (sequence !== requestSequence) return;
+                    todosContainer.replaceChildren(element(
+                        'p', 'no-todos', 'Could not load search results. Please try again.'
+                    ));
+                }
+            });
+        })();
     </script>
 </body>
 </html>

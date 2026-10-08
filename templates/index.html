@@ -14,6 +14,7 @@
         <div class="add-todo-section">
             <h2>Add New Todo</h2>
             <form method="POST" action="{{ url_for('add_todo') }}" class="todo-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <input
                     type="text"
                     name="title"
@@ -74,13 +75,17 @@
                                 </div>
                             </div>
                             <div class="comments-section">
-                                {% for c in todo.comment_list %}
+                                {% if todo.comments|length >= comments_per_todo %}
+                                <p>Showing the {{ comments_per_todo }} most recent comments.</p>
+                                {% endif %}
+                                {% for c in todo.comments %}
                                 <div class="comment-item">
                                     <span class="comment-text">{{ c.text }}</span>
                                     <span class="comment-time">{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
                                 </div>
                                 {% endfor %}
                                 <form class="comment-form" method="POST" action="{{ url_for('add_comment', todo_id=todo.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                     <input
                                         type="text"
                                         name="comment"

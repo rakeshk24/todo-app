@@ -147,9 +147,14 @@ textarea.input-field {
     border-radius: 8px;
     padding: 15px;
     display: flex;
+    flex-direction: column;
+    transition: all 0.3s;
+}
+
+.todo-main-row {
+    display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.3s;
 }
 
 .todo-item:hover {
@@ -219,6 +224,62 @@ textarea.input-field {
     color: #999;
     padding: 40px 20px;
     font-size: 1.1em;
+}
+
+/* Comments */
+.comments-section {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.comment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.comment-time {
+    font-size: 0.8em;
+    color: #aaa;
+    margin-left: 10px;
+    white-space: nowrap;
+}
+
+.comment-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.comment-input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: inherit;
+}
+
+.btn-comment {
+    background: #667eea;
+    color: white;
+    padding: 6px 14px;
+    font-size: 0.85em;
+}
+
+.btn-comment:hover {
+    background: #5568d3;
+}
+
+.comment-preview {
+    font-size: 0.85em;
+    color: #888;
+    margin-top: 4px;
+    min-height: 18px;
 }
 
 /* Responsive Design */

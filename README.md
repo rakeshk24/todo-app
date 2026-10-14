@@ -36,7 +36,12 @@ pip install -r requirements.txt
 
 ### 2. Run the Application
 
+Set a stable, random `SECRET_KEY` environment variable for deployed instances so
+CSRF tokens remain valid across workers and restarts. Local development falls back
+to a random key that lasts for the process lifetime.
+
 ```bash
+alembic upgrade head
 python app.py
 ```
 
@@ -62,6 +67,24 @@ The app will be available at `http://localhost:5000`
 ## Database
 
 The app uses SQLite for persistent storage. The database file (`todos.db`) is automatically created when you first run the app.
+
+Before deploying an update, back up `instance/todos.db`, stop application writers,
+and run `alembic upgrade head` from the repository root. The first migration fills
+missing comment timestamps with the migration time (UTC), then enforces NOT NULL
+while preserving existing timestamps and comments. `db.create_all()` alone does
+not upgrade existing tables. `DATABASE_URL` can override the default database URL;
+use the same value for migration and application commands.
+
+Each todo displays its 50 most recent comments, with older comments retained in
+the database. The todo list itself keeps its existing ordering and size.
+
+## Tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Tests use a temporary SQLite database and keep CSRF protection enabled.
 
 ## Technologies Used
 

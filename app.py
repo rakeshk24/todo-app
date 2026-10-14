@@ -50,8 +50,15 @@ class Comment(db.Model):
     todo_id = db.Column(db.Integer, db.ForeignKey('todo.id'), nullable=False)
     text = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    todo = db.relationship('Todo', backref=db.backref('comments', lazy=True,
-                                                    order_by='Comment.id'))
+    todo = db.relationship(
+        'Todo',
+        backref=db.backref(
+            'comments',
+            lazy=True,
+            order_by='Comment.id',
+            cascade='all, delete-orphan',
+        ),
+    )
 
 # Create tables
 with app.app_context():

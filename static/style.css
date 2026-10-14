@@ -33,6 +33,80 @@ h2 {
     font-size: 1.5em;
 }
 
+/* Page header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin-bottom: 0;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
+/* Stats */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    border-left: 4px solid #667eea;
+}
+
+.stat-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 4px;
+}
+
+.progress-section {
+    margin-bottom: 30px;
+}
+
+.progress-bar-bg {
+    background: #e0e0e0;
+    border-radius: 6px;
+    height: 32px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-bar-fill {
+    background: #667eea;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    min-width: 40px;
+    transition: width 0.3s;
+}
+
+.stats-back {
+    margin-top: 20px;
+}
+
 /* Add Todo Section */
 .add-todo-section {
     background: #f8f9fa;

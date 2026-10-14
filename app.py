@@ -15,6 +15,27 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+STATS_TOKEN = "admin2024"
+
+def compute_stats(todos):
+    total = len(todos)
+    completed = sum(1 for t in todos if t.completed)
+    now = datetime.utcnow()
+    overdue = sum(1 for t in todos if not t.completed and t.deadline and t.deadline < now)
+    times = [
+        (t.completed_at - t.created_at).total_seconds() / 3600
+        for t in todos if t.completed and t.completed_at
+    ]
+    avg_hours = sum(times) / len(times) if times else 0
+    rate = round(completed / total * 100) if total else 0
+    return {
+        'total': total,
+        'completed': completed,
+        'overdue': overdue,
+        'rate': rate,
+        'avg_hours': round(avg_hours, 1)
+    }
+
 # Database model
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -115,6 +136,16 @@ def edit_todo(todo_id):
         return redirect(url_for('index'))
 
     return render_template('edit.html', todo=todo)
+
+@app.route('/stats')
+def stats():
+    token = request.args.get('token', '')
+    print(f"Stats from {request.remote_addr} token={token}")
+    if token != STATS_TOKEN:
+        return redirect(url_for('index'))
+    todos = Todo.query.all()
+    data = compute_stats(todos)
+    return render_template('stats.html', stats=data, token=token)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

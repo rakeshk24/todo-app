@@ -221,6 +221,79 @@ textarea.input-field {
     font-size: 1.1em;
 }
 
+/* Sub-tasks */
+.subtask-progress {
+    font-size: 0.8em;
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.subtask-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 8px 0;
+}
+
+.subtask-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.subtask-done .subtask-text {
+    text-decoration: line-through;
+    color: #aaa;
+}
+
+.subtask-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.subtask-form {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    align-items: center;
+}
+
+.subtask-input {
+    padding: 6px 10px;
+    font-size: 0.85em;
+    flex: 1;
+}
+
+.btn-subtask {
+    padding: 6px 12px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.btn-subtask:hover {
+    background: #5568d3;
+}
+
+.subtask-section {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.subtask-section h3 {
+    font-size: 1em;
+    color: #555;
+    margin-bottom: 10px;
+}
+
 /* Responsive Design */
 @media (max-width: 600px) {
     .container {

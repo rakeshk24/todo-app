@@ -221,6 +221,65 @@ textarea.input-field {
     font-size: 1.1em;
 }
 
+/* Share link */
+.btn-share {
+    background: #764ba2;
+    color: white;
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
+.btn-share:hover {
+    background: #5a3780;
+}
+
+.share-link-section {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-left: 37px;
+}
+
+.share-label {
+    font-size: 0.8em;
+    color: #999;
+    font-weight: 600;
+}
+
+.share-url {
+    font-size: 0.8em;
+    color: #667eea;
+    word-break: break-all;
+}
+
+/* Shared todo read-only view */
+.shared-todo {
+    background: #f8f9fa;
+    padding: 24px;
+    border-radius: 8px;
+    border-left: 4px solid #764ba2;
+    margin-bottom: 24px;
+}
+
+.todo-status {
+    margin-top: 12px;
+    font-weight: 600;
+    color: #555;
+}
+
+.shared-footer {
+    text-align: center;
+    color: #999;
+    font-size: 0.9em;
+}
+
+.shared-footer a {
+    color: #667eea;
+    text-decoration: none;
+}
+
 /* Responsive Design */
 @media (max-width: 600px) {
     .container {

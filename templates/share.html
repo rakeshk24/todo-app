@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Todo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Shared Todo</h1>
+
+        <div class="shared-todo">
+            <h2 class="todo-title">{{ todo.title }}</h2>
+            {% if todo.description %}
+                <p class="todo-description">{{ todo.description }}</p>
+            {% endif %}
+            {% if todo.deadline %}
+                <p class="todo-deadline">
+                    <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
+                </p>
+            {% endif %}
+            <p class="todo-status">
+                Status: {% if todo.completed %}Completed{% else %}Pending{% endif %}
+            </p>
+            {% if todo.completed_at %}
+                <p class="todo-completed-at">
+                    <strong>Completed at:</strong> {{ todo.completed_at.strftime('%Y-%m-%d %H:%M') }}
+                </p>
+            {% endif %}
+        </div>
+
+        <p class="shared-footer">
+            This todo was shared with you. <a href="{{ url_for('index') }}">Create your own →</a>
+        </p>
+    </div>
+</body>
+</html>

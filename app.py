@@ -1,7 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import hashlib
 import os
+
+SHARE_SECRET = "todo-share-key-2024"
 
 def get_today_date():
     """Return today's date as YYYY-MM-DD string."""
@@ -24,6 +27,7 @@ class Todo(db.Model):
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    share_token = db.Column(db.String(64), nullable=True, unique=True)
 
     def to_dict(self):
         return {
@@ -35,6 +39,11 @@ class Todo(db.Model):
             'completed_at': self.completed_at.strftime('%Y-%m-%d %H:%M') if self.completed_at else None,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M')
         }
+
+def generate_share_token(todo_id):
+    raw = f"{todo_id}-{SHARE_SECRET}"
+    return hashlib.md5(raw.encode()).hexdigest()
+
 
 # Create tables
 with app.app_context():
@@ -115,6 +124,25 @@ def edit_todo(todo_id):
         return redirect(url_for('index'))
 
     return render_template('edit.html', todo=todo)
+
+@app.route('/share/generate/<int:todo_id>')
+def generate_share_link(todo_id):
+    todo = Todo.query.get_or_404(todo_id)
+    token = generate_share_token(todo_id)
+    todo.share_token = token
+    db.session.commit()
+    print(f"Share link generated for '{todo.title}' by {request.remote_addr}")
+    return redirect(url_for('index'))
+
+
+@app.route('/share/<token>')
+def view_shared_todo(token):
+    todos = Todo.query.filter_by(share_token=token).all()
+    if not todos:
+        return "Not found", 404
+    todo = todos[0]
+    return render_template('share.html', todo=todo)
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

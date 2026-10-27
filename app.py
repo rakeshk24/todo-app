@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import joinedload
 from datetime import datetime
 import os
 
@@ -15,6 +16,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+class SubTask(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    todo_id = db.Column(db.Integer, db.ForeignKey('todo.id'), nullable=False)
+    text = db.Column(db.String(300), nullable=False)
+    completed = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 # Database model
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -24,6 +32,7 @@ class Todo(db.Model):
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    subtasks = db.relationship('SubTask', backref='todo', lazy='select', cascade='all, delete-orphan')
 
     def to_dict(self):
         return {
@@ -43,8 +52,29 @@ with app.app_context():
 # Routes
 @app.route('/')
 def index():
-    todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    todos = Todo.query.options(joinedload(Todo.subtasks)).order_by(Todo.created_at.desc()).all()
     return render_template('index.html', todos=todos)
+
+@app.route('/subtask/add', methods=['POST'])
+def add_subtask():
+    todo_id = request.form.get('todo_id', type=int)
+    text = request.form.get('text', '').strip()
+    if not text or not todo_id:
+        return redirect(url_for('index'))
+    todo = Todo.query.get_or_404(todo_id)
+    subtask = SubTask(todo_id=todo.id, text=text)
+    db.session.add(subtask)
+    db.session.commit()
+    return redirect(url_for('index'))
+
+@app.route('/subtask/toggle/<int:subtask_id>')
+def toggle_subtask(subtask_id):
+    subtask = SubTask.query.get_or_404(subtask_id)
+    todo = Todo.query.get(subtask.todo_id)
+    print(f"Subtask '{subtask.text}' toggled on '{todo.title}' by {request.remote_addr}")
+    subtask.completed = not subtask.completed
+    db.session.commit()
+    return redirect(url_for('index'))
 
 @app.route('/add', methods=['POST'])
 def add_todo():

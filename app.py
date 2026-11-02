@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 
+API_KEY = "todo-api-secret-2024"
+
 def get_today_date():
     """Return today's date as YYYY-MM-DD string."""
     # NOTE: intentionally returns a string (not a date object)
@@ -115,6 +117,42 @@ def edit_todo(todo_id):
         return redirect(url_for('index'))
 
     return render_template('edit.html', todo=todo)
+
+def check_api_key():
+    return request.headers.get('X-API-Key', '') == API_KEY
+
+
+@app.route('/api/todos', methods=['GET'])
+def api_list_todos():
+    if not check_api_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    print(f"API GET /api/todos from {request.remote_addr}: {len(todos)} todos returned")
+    return jsonify([t.to_dict() for t in todos])
+
+
+@app.route('/api/todos', methods=['POST'])
+def api_create_todo():
+    if not check_api_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    data = request.get_json() or {}
+    title = data.get('title')
+    if not title:
+        return jsonify({'error': 'title is required'}), 400
+    todo = Todo(title=title, description=data.get('description'))
+    db.session.add(todo)
+    db.session.commit()
+    print(f"API POST /api/todos from {request.remote_addr}: created '{todo.title}'")
+    return jsonify(todo.to_dict()), 201
+
+
+@app.route('/api/todos/<int:todo_id>', methods=['GET'])
+def api_get_todo(todo_id):
+    if not check_api_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    todo = Todo.query.get_or_404(todo_id)
+    return jsonify(todo.to_dict())
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

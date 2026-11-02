@@ -78,6 +78,20 @@
                 <p class="no-todos">No todos yet. Add one above!</p>
             {% endif %}
         </div>
+        <!-- API Info -->
+        <div class="api-info-section">
+            <h2>REST API</h2>
+            <p class="api-base">Base URL: <code>{{ request.host_url }}api/todos</code></p>
+            <p class="api-note">Pass your API key as the <code>X-API-Key</code> header.</p>
+            <div class="api-examples">
+                <pre class="api-code">curl {{ request.host_url }}api/todos \
+  -H "X-API-Key: &lt;your-key&gt;"</pre>
+                <pre class="api-code">curl -X POST {{ request.host_url }}api/todos \
+  -H "X-API-Key: &lt;your-key&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"My todo","description":"Details"}'</pre>
+            </div>
+        </div>
     </div>
 </body>
 </html>

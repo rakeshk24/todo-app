@@ -230,10 +230,12 @@ textarea.input-field {
     display: flex;
     gap: 10px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .filter-input {
     flex: 1;
+    min-width: 0;
     padding: 10px 12px;
 }
 
@@ -264,5 +266,14 @@ textarea.input-field {
 
     .btn {
         flex: 1;
+    }
+
+    .filter-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-input {
+        width: 100%;
     }
 }

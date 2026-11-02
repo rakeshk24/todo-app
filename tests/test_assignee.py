@@ -13,39 +13,57 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-class TodoTitles(HTMLParser):
+class TodoPage(HTMLParser):
     def __init__(self):
         super().__init__()
         self.titles = []
         self.inputs = {}
-        self.spans = []
+        self.cards = []
         self.in_title = False
         self.in_span = False
+        self.card = None
+        self.card_depth = 0
+        self.span_parts = []
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
+        if tag == 'div':
+            if self.card_depth:
+                self.card_depth += 1
+            elif 'todo-item' in attrs.get('class', '').split():
+                self.card = {'title': '', 'spans': []}
+                self.cards.append(self.card)
+                self.card_depth = 1
         if tag == 'h3' and attrs.get('class') == 'todo-title':
             self.in_title = True
         if tag == 'input' and 'name' in attrs:
-            self.inputs[attrs['name']] = attrs.get('value', '')
-        if tag == 'span':
+            self.inputs[attrs['name']] = attrs.get('value')
+        if tag == 'span' and self.card is not None:
             self.in_span = True
+            self.span_parts = []
 
     def handle_data(self, data):
         if self.in_title:
             self.titles.append(data)
+            if self.card is not None:
+                self.card['title'] += data
         if self.in_span:
-            self.spans.append(data)
+            self.span_parts.append(data)
 
     def handle_endtag(self, tag):
         if tag == 'h3':
             self.in_title = False
-        if tag == 'span':
+        if tag == 'span' and self.in_span:
+            self.card['spans'].append(''.join(self.span_parts))
             self.in_span = False
+        if tag == 'div' and self.card_depth:
+            self.card_depth -= 1
+            if not self.card_depth:
+                self.card = None
 
 
 def titles(response):
-    parser = TodoTitles()
+    parser = TodoPage()
     parser.feed(response.get_data(as_text=True))
     return parser.titles
 
@@ -107,15 +125,22 @@ class AssigneeTests(unittest.TestCase):
         app = self.load_app()
         with app.app.app_context():
             todo = app.Todo(title='Edit me', assignee_email='User@example.com')
-            app.db.session.add(todo)
+            unassigned = app.Todo(title='Unassigned')
+            app.db.session.add_all([todo, unassigned])
             app.db.session.commit()
             todo_id = todo.id
+            unassigned_id = unassigned.id
         client = app.app.test_client()
         response = client.get(f'/edit/{todo_id}')
         self.assertEqual(response.status_code, 200)
-        page = TodoTitles()
+        page = TodoPage()
         page.feed(response.get_data(as_text=True))
         self.assertEqual(page.inputs['assignee_email'], 'User@example.com')
+        response = client.get(f'/edit/{unassigned_id}')
+        self.assertEqual(response.status_code, 200)
+        page = TodoPage()
+        page.feed(response.get_data(as_text=True))
+        self.assertEqual(page.inputs['assignee_email'], '')
         response = client.post(f'/edit/{todo_id}', data={'title': 'Updated'})
         self.assertEqual(response.status_code, 302)
         with app.app.app_context():
@@ -157,23 +182,38 @@ class AssigneeTests(unittest.TestCase):
         filtered = client.get('/', query_string={'assignee': '  User@EXAMPLE.COM  '})
         self.assertEqual(filtered.status_code, 200)
         self.assertEqual(titles(filtered), ['New match', 'Old match'])
-        page = TodoTitles()
+        page = TodoPage()
         page.feed(filtered.get_data(as_text=True))
         self.assertEqual(page.inputs['assignee'], 'User@EXAMPLE.COM')
-        self.assertEqual(page.spans, ['User@example.com', 'User@example.com'])
+        self.assertEqual(page.cards, [
+            {'title': 'New match', 'spans': ['User@example.com']},
+            {'title': 'Old match', 'spans': ['User@example.com']},
+        ])
         normalized = client.get('/', query_string={'assignee': 'User@example.com'})
         self.assertEqual(normalized.status_code, 200)
         self.assertEqual(titles(normalized), ['New match', 'Old match'])
-        page = TodoTitles()
+        page = TodoPage()
         page.feed(normalized.get_data(as_text=True))
         self.assertEqual(page.inputs['assignee'], 'User@example.com')
-        self.assertEqual(page.spans, ['User@example.com', 'User@example.com'])
+        self.assertEqual(page.cards, [
+            {'title': 'New match', 'spans': ['User@example.com']},
+            {'title': 'Old match', 'spans': ['User@example.com']},
+        ])
         for query in ({}, {'assignee': '   '}):
             with self.subTest(query=query):
                 response = client.get('/', query_string=query)
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(titles(response), [
                     'Unassigned', 'Partial', 'New match', 'Different local case', 'Old match',
+                ])
+                page = TodoPage()
+                page.feed(response.get_data(as_text=True))
+                self.assertEqual(page.cards, [
+                    {'title': 'Unassigned', 'spans': []},
+                    {'title': 'Partial', 'spans': ['User@example.com.extra']},
+                    {'title': 'New match', 'spans': ['User@example.com']},
+                    {'title': 'Different local case', 'spans': ['user@example.com']},
+                    {'title': 'Old match', 'spans': ['User@example.com']},
                 ])
 
     def test_existing_schema_migration_preserves_rows_and_is_repeatable(self):

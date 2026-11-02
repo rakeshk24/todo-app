@@ -31,6 +31,13 @@
                     class="input-field"
                     value="{% if todo.deadline %}{{ todo.deadline.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
                 />
+                <input
+                    type="text"
+                    name="assignee_email"
+                    placeholder="Assign to (email address, optional)"
+                    value="{{ todo.assignee_email or '' }}"
+                    class="input-field"
+                />
                 <div class="button-group">
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                     <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>

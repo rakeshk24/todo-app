@@ -1,9 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import inspect as sql_inspect, text as sql_text
 from datetime import datetime
 import hmac
 import os
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+def normalize_email(email):
+    if not email or '@' not in email:
+        return email
+    local, domain = email.rsplit('@', 1)
+    return f"{local}@{domain.lower()}"
+
 
 def get_today_date():
     """Return today's date as YYYY-MM-DD string."""
@@ -52,6 +60,7 @@ class Todo(db.Model):
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    assignee_email = db.Column(db.String(200), nullable=True)
 
     def to_dict(self):
         return {
@@ -67,12 +76,22 @@ class Todo(db.Model):
 # Create tables
 with app.app_context():
     db.create_all()
+    _cols = [c['name'] for c in sql_inspect(db.engine).get_columns('todo')]
+    if 'assignee_email' not in _cols:
+        db.session.execute(sql_text('ALTER TABLE todo ADD COLUMN assignee_email VARCHAR(200)'))
+        db.session.commit()
 
 # Routes
 @app.route('/')
 def index():
-    todos = Todo.query.order_by(Todo.created_at.desc()).all()
-    return render_template('index.html', todos=todos)
+    assignee = request.args.get('assignee', '').strip()
+    if assignee:
+        todos = Todo.query.filter_by(
+            assignee_email=normalize_email(assignee)
+        ).order_by(Todo.created_at.desc()).all()
+    else:
+        todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    return render_template('index.html', todos=todos, current_assignee=assignee)
 
 @app.route('/add', methods=['POST'])
 def add_todo():
@@ -129,6 +148,9 @@ def edit_todo(todo_id):
     if request.method == 'POST':
         todo.title = request.form.get('title', todo.title)
         todo.description = request.form.get('description', todo.description)
+        if 'assignee_email' in request.form:
+            assignee_email = request.form.get('assignee_email', '').strip()
+            todo.assignee_email = normalize_email(assignee_email) if assignee_email else None
         deadline = request.form.get('deadline')
 
         if deadline:

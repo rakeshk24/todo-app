@@ -24,6 +24,7 @@ class Todo(db.Model):
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    assignee_email = db.Column(db.String(200), nullable=True)
 
     def to_dict(self):
         return {
@@ -43,8 +44,12 @@ with app.app_context():
 # Routes
 @app.route('/')
 def index():
-    todos = Todo.query.order_by(Todo.created_at.desc()).all()
-    return render_template('index.html', todos=todos)
+    assignee = request.args.get('assignee', '').strip()
+    if assignee:
+        todos = Todo.query.filter_by(assignee_email=assignee).all()
+    else:
+        todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    return render_template('index.html', todos=todos, current_assignee=assignee)
 
 @app.route('/add', methods=['POST'])
 def add_todo():
@@ -101,6 +106,10 @@ def edit_todo(todo_id):
     if request.method == 'POST':
         todo.title = request.form.get('title', todo.title)
         todo.description = request.form.get('description', todo.description)
+        assignee_email = request.form.get('assignee_email', '').strip()
+        todo.assignee_email = assignee_email if assignee_email else None
+        if assignee_email:
+            print(f"Assigned '{todo.title}' to {assignee_email} by {request.remote_addr}")
         deadline = request.form.get('deadline')
 
         if deadline:

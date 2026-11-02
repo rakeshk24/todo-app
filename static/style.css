@@ -221,6 +221,22 @@ textarea.input-field {
     font-size: 1.1em;
 }
 
+/* Assignee filter */
+.assignee-filter {
+    margin-bottom: 20px;
+}
+
+.filter-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.filter-input {
+    flex: 1;
+    padding: 10px 12px;
+}
+
 /* Responsive Design */
 @media (max-width: 600px) {
     .container {

@@ -19,6 +19,10 @@ class TodoPage(HTMLParser):
         self.titles = []
         self.inputs = {}
         self.cards = []
+        self.headings = []
+        self.links = []
+        self.heading_parts = None
+        self.link = None
         self.in_title = False
         self.in_span = False
         self.card = None
@@ -27,6 +31,10 @@ class TodoPage(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
+        if tag == 'h2':
+            self.heading_parts = []
+        if tag == 'a':
+            self.link = {'href': attrs.get('href'), 'text': ''}
         if tag == 'div':
             if self.card_depth:
                 self.card_depth += 1
@@ -43,6 +51,10 @@ class TodoPage(HTMLParser):
             self.span_parts = []
 
     def handle_data(self, data):
+        if self.heading_parts is not None:
+            self.heading_parts.append(data)
+        if self.link is not None:
+            self.link['text'] += data
         if self.in_title:
             self.titles.append(data)
             if self.card is not None:
@@ -51,6 +63,12 @@ class TodoPage(HTMLParser):
             self.span_parts.append(data)
 
     def handle_endtag(self, tag):
+        if tag == 'h2' and self.heading_parts is not None:
+            self.headings.append(''.join(self.heading_parts))
+            self.heading_parts = None
+        if tag == 'a' and self.link is not None:
+            self.links.append(self.link)
+            self.link = None
         if tag == 'h3':
             self.in_title = False
         if tag == 'span' and self.in_span:
@@ -185,6 +203,9 @@ class AssigneeTests(unittest.TestCase):
         page = TodoPage()
         page.feed(filtered.get_data(as_text=True))
         self.assertEqual(page.inputs['assignee'], 'User@EXAMPLE.COM')
+        self.assertIn('Your Todos assigned to User@EXAMPLE.COM', page.headings)
+        self.assertEqual([link for link in page.links if link['text'].strip() == 'Clear'],
+                         [{'href': '/', 'text': 'Clear'}])
         self.assertEqual(page.cards, [
             {'title': 'New match', 'spans': ['User@example.com']},
             {'title': 'Old match', 'spans': ['User@example.com']},
@@ -195,6 +216,9 @@ class AssigneeTests(unittest.TestCase):
         page = TodoPage()
         page.feed(normalized.get_data(as_text=True))
         self.assertEqual(page.inputs['assignee'], 'User@example.com')
+        self.assertIn('Your Todos assigned to User@example.com', page.headings)
+        self.assertEqual([link for link in page.links if link['text'].strip() == 'Clear'],
+                         [{'href': '/', 'text': 'Clear'}])
         self.assertEqual(page.cards, [
             {'title': 'New match', 'spans': ['User@example.com']},
             {'title': 'Old match', 'spans': ['User@example.com']},
@@ -208,6 +232,10 @@ class AssigneeTests(unittest.TestCase):
                 ])
                 page = TodoPage()
                 page.feed(response.get_data(as_text=True))
+                self.assertIn('Your Todos', page.headings)
+                self.assertFalse(any(heading.startswith('Your Todos assigned to')
+                                     for heading in page.headings))
+                self.assertFalse(any(link['text'].strip() == 'Clear' for link in page.links))
                 self.assertEqual(page.cards, [
                     {'title': 'Unassigned', 'spans': []},
                     {'title': 'Partial', 'spans': ['User@example.com.extra']},

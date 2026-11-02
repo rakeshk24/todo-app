@@ -35,9 +35,26 @@
             </form>
         </div>
 
+        <!-- Assignee Filter -->
+        <div class="assignee-filter">
+            <form method="GET" action="{{ url_for('index') }}" class="filter-form">
+                <input
+                    type="text"
+                    name="assignee"
+                    placeholder="Filter by assignee email"
+                    value="{{ current_assignee }}"
+                    class="input-field filter-input"
+                />
+                <button type="submit" class="btn btn-secondary">Filter</button>
+                {% if current_assignee %}
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+
         <!-- Todos List -->
         <div class="todos-section">
-            <h2>Your Todos</h2>
+            <h2>Your Todos{% if current_assignee %} assigned to {{ current_assignee }}{% endif %}</h2>
             {% if todos %}
                 <div class="todos-container">
                     {% for todo in todos %}
@@ -64,6 +81,9 @@
                                         <p class="todo-completed-at">
                                             <strong>Completed at:</strong> {{ todo.completed_at.strftime('%Y-%m-%d %H:%M') }}
                                         </p>
+                                    {% endif %}
+                                    {% if todo.assignee_email %}
+                                        <span style="background: #e8d5ff; color: #764ba2; padding: 2px 10px; border-radius: 10px; font-size: 0.8em; display: inline-block; margin-top: 6px;">{{ todo.assignee_email }}</span>
                                     {% endif %}
                                 </div>
                             </div>

@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import hmac
 import os
-
-API_KEY = "todo-api-secret-2024"
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 def get_today_date():
     """Return today's date as YYYY-MM-DD string."""
@@ -12,10 +12,36 @@ def get_today_date():
     return datetime.now().strftime("%Y-%m-%d")
 
 app = Flask(__name__)
+app.config['API_KEY'] = os.environ.get('TODO_API_KEY', '')
+if not app.config['API_KEY'].strip():
+    raise RuntimeError('TODO_API_KEY must be configured')
+
+# Set this only when the application is reachable exclusively through trusted proxies.
+proxy_hops = int(os.environ.get('TRUSTED_PROXY_HOPS', '0'))
+if proxy_hops < 0:
+    raise ValueError('TRUSTED_PROXY_HOPS must be non-negative')
+if proxy_hops:
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app, x_for=0, x_proto=proxy_hops, x_host=0, x_port=0, x_prefix=0
+    )
+app.config['ALLOW_INSECURE_HTTP'] = os.environ.get('ALLOW_INSECURE_HTTP') == '1'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todos.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+
+@app.before_request
+def require_https():
+    if not request.is_secure and not app.config['ALLOW_INSECURE_HTTP']:
+        return jsonify({'error': 'HTTPS required'}), 400
+
+
+@app.after_request
+def add_hsts(response):
+    if request.is_secure:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000'
+    return response
 
 # Database model
 class Todo(db.Model):
@@ -119,14 +145,25 @@ def edit_todo(todo_id):
     return render_template('edit.html', todo=todo)
 
 def check_api_key():
-    return request.headers.get('X-API-Key', '') == API_KEY
+    supplied_key = request.headers.get('X-API-Key', '').encode('utf-8')
+    return hmac.compare_digest(supplied_key, app.config['API_KEY'].encode('utf-8'))
 
 
 @app.route('/api/todos', methods=['GET'])
 def api_list_todos():
     if not check_api_key():
         return jsonify({'error': 'Unauthorized'}), 401
-    todos = Todo.query.order_by(Todo.created_at.desc()).all()
+    page_arg = request.args.get('page', '1')
+    per_page_arg = request.args.get('per_page', '20')
+    if (not page_arg.isascii() or not page_arg.isdigit() or len(page_arg) > 7
+            or not per_page_arg.isascii() or not per_page_arg.isdigit()
+            or len(per_page_arg) > 3):
+        return jsonify({'error': 'Invalid pagination parameters'}), 400
+    page, per_page = int(page_arg), int(per_page_arg)
+    if not 1 <= page <= 1000000 or not 1 <= per_page <= 100:
+        return jsonify({'error': 'Invalid pagination parameters'}), 400
+    todos = (Todo.query.order_by(Todo.created_at.desc(), Todo.id.desc())
+             .offset((page - 1) * per_page).limit(per_page).all())
     print(f"API GET /api/todos from {request.remote_addr}: {len(todos)} todos returned")
     return jsonify([t.to_dict() for t in todos])
 
@@ -135,11 +172,23 @@ def api_list_todos():
 def api_create_todo():
     if not check_api_key():
         return jsonify({'error': 'Unauthorized'}), 401
-    data = request.get_json() or {}
+    data = request.get_json(silent=True)
+    if (not isinstance(data, dict) or not isinstance(data.get('title'), str)
+            or not isinstance(data.get('description'), str)):
+        return jsonify({'error': 'title and description must be strings'}), 400
     title = data.get('title')
     if not title:
         return jsonify({'error': 'title is required'}), 400
-    todo = Todo(title=title, description=data.get('description'))
+    deadline = data.get('deadline')
+    deadline_obj = None
+    if deadline is not None and deadline != '':
+        if not isinstance(deadline, str):
+            return jsonify({'error': 'Invalid deadline'}), 400
+        try:
+            deadline_obj = datetime.strptime(deadline, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            return jsonify({'error': 'Invalid deadline'}), 400
+    todo = Todo(title=title, description=data['description'], deadline=deadline_obj)
     db.session.add(todo)
     db.session.commit()
     print(f"API POST /api/todos from {request.remote_addr}: created '{todo.title}'")
@@ -150,7 +199,9 @@ def api_create_todo():
 def api_get_todo(todo_id):
     if not check_api_key():
         return jsonify({'error': 'Unauthorized'}), 401
-    todo = Todo.query.get_or_404(todo_id)
+    todo = db.session.get(Todo, todo_id)
+    if todo is None:
+        return jsonify({'error': 'Todo not found'}), 404
     return jsonify(todo.to_dict())
 
 

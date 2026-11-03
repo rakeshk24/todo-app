@@ -98,6 +98,26 @@
                 <p class="no-todos">No todos yet. Add one above!</p>
             {% endif %}
         </div>
+        <!-- API Info -->
+        <div class="api-info-section">
+            <h2>REST API</h2>
+            <p class="api-base">Example URL: <code>https://your-domain.example/api/todos</code></p>
+            <p>Replace your-domain.example with your HTTPS host.</p>
+            <p class="api-note">Pass your API key as the <code>X-API-Key</code> header.</p>
+            <p>Get one todo with <code>GET /api/todos/&lt;todo_id&gt;</code>. A missing todo returns
+                status 404 with JSON <code>{"error": "Todo not found"}</code>.</p>
+            <div class="api-examples">
+                <pre class="api-code">curl https://your-domain.example/api/todos \
+  -H "X-API-Key: &lt;your-key&gt;"</pre>
+                <pre class="api-code">curl https://your-domain.example/api/todos/123 \
+  -H "X-API-Key: &lt;your-key&gt;"</pre>
+                <pre class="api-code">curl -X POST https://your-domain.example/api/todos \
+  -H "X-API-Key: &lt;your-key&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"My todo","description":"Details"}'</pre>
+            </div>
+            <p>Replace 123 with the todo ID.</p>
+        </div>
     </div>
 </body>
 </html>

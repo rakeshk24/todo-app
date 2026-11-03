@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import shutil
 import sqlite3
 import sys
@@ -8,6 +9,7 @@ import uuid
 from datetime import datetime
 from html.parser import HTMLParser
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -100,8 +102,12 @@ class AssigneeTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         sys.modules[name] = module
         self.addCleanup(sys.modules.pop, name, None)
-        spec.loader.exec_module(module)
+        with patch.dict(os.environ, {'TODO_API_KEY': 'test-key-only',
+                                     'TRUSTED_PROXY_HOPS': '0',
+                                     'ALLOW_INSECURE_HTTP': '0'}):
+            spec.loader.exec_module(module)
         module.app.config['TESTING'] = True
+        module.app.config['PREFERRED_URL_SCHEME'] = 'https'
 
         def dispose():
             with module.app.app_context():

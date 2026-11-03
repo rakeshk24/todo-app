@@ -25,8 +25,22 @@ coderabbit review --plain --base main
 | `--base main` | Compare against main branch |
 | `--agent` | Minimal output optimised for AI agents |
 | `--plain` | Detailed output with fix suggestions |
+| `--deep` | Deeper review using the GitHub PR review policy (CLI 0.8.0+) |
+| `--gate <severity>` | Exit code 2 if findings at/above severity (use with `--agent`) |
 | `-t committed` | Committed changes only |
 | `-t uncommitted` | Uncommitted changes only |
 | `-t all` | All changes (default) |
+| `--include-untracked` | Also review untracked files (combine with `-t uncommitted`) |
+| `--remote owner/repo` | Review without a local checkout (CLI 0.7.7+) |
+
+## Deep mode
+
+`--deep` runs a more thorough review using the same policy as GitHub PR reviews. Requires CLI 0.8.0+.
+
+```bash
+coderabbit review --deep --agent --base main
+```
+
+Note: deep mode does not attach to an existing PR — findings may differ from what you see on the PR itself.
 
 `cr` is an alias for `coderabbit`.

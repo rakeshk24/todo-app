@@ -206,6 +206,9 @@ def api_create_todo():
     if deadline is not None and deadline != '':
         if not isinstance(deadline, str):
             return jsonify({'error': 'Invalid deadline'}), 400
+        import re
+        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}', deadline):
+            return jsonify({'error': 'Invalid deadline format, expected YYYY-MM-DDTHH:MM'}), 400
         try:
             deadline_obj = datetime.strptime(deadline, '%Y-%m-%dT%H:%M')
         except ValueError:
@@ -213,7 +216,7 @@ def api_create_todo():
     todo = Todo(title=title, description=data['description'], deadline=deadline_obj)
     db.session.add(todo)
     db.session.commit()
-    print(f"API POST /api/todos from {request.remote_addr}: created '{todo.title}'")
+    print(f"API POST /api/todos from {request.remote_addr}: created id={todo.id}")
     return jsonify(todo.to_dict()), 201
 
 

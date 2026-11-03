@@ -53,6 +53,36 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.get('/api/todos', base_url=self.https,
                                          headers=self.headers).status_code, 200)
 
+    def test_utf8_key_is_recovered_from_wsgi_header_bytes(self):
+        key = 'test-caf\u00e9'
+        wsgi_value = key.encode('utf-8').decode('latin-1')
+        with patch.dict(todo_app.app.config, {'API_KEY': key}):
+            response = self.client.get('/api/todos', base_url=self.https,
+                                       environ_overrides={'HTTP_X_API_KEY': wsgi_value})
+            self.assertEqual(response.status_code, 200)
+            response = self.client.get('/api/todos', base_url=self.https,
+                                       environ_overrides={'HTTP_X_API_KEY': 'wrong-key'})
+            self.assertEqual(response.status_code, 401)
+
+    def test_list_and_get_serialize_legacy_null_creation_timestamp(self):
+        with todo_app.app.app_context():
+            legacy = todo_app.Todo(title='Legacy', description='')
+            dated = todo_app.Todo(title='Dated', description='',
+                                  created_at=datetime(2024, 2, 29, 12, 30))
+            todo_app.db.session.add_all([legacy, dated])
+            todo_app.db.session.commit()
+            legacy.created_at = None
+            todo_app.db.session.commit()
+            legacy_id = legacy.id
+        response = self.client.get('/api/todos', base_url=self.https, headers=self.headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual({todo['title']: todo['created_at'] for todo in response.json},
+                         {'Legacy': None, 'Dated': '2024-02-29 12:30'})
+        response = self.client.get(f'/api/todos/{legacy_id}', base_url=self.https,
+                                   headers=self.headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json['created_at'])
+
     def test_pagination_limits_and_orders_selected_page(self):
         with todo_app.app.app_context():
             now = datetime(2024, 1, 1)

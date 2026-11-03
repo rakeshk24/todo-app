@@ -70,7 +70,7 @@ class Todo(db.Model):
             'deadline': self.deadline.strftime('%Y-%m-%d %H:%M') if self.deadline else None,
             'completed': self.completed,
             'completed_at': self.completed_at.strftime('%Y-%m-%d %H:%M') if self.completed_at else None,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M')
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else None
         }
 
 # Create tables
@@ -167,7 +167,7 @@ def edit_todo(todo_id):
     return render_template('edit.html', todo=todo)
 
 def check_api_key():
-    supplied_key = request.headers.get('X-API-Key', '').encode('utf-8')
+    supplied_key = request.headers.get('X-API-Key', '').encode('latin-1')
     return hmac.compare_digest(supplied_key, app.config['API_KEY'].encode('utf-8'))
 
 

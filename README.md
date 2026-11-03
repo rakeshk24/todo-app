@@ -54,7 +54,15 @@ For local development only, set `ALLOW_INSECURE_HTTP=1`, then run `python app.py
 
 Send the configured key in the `X-API-Key` header over HTTPS. Encode the exact key as UTF-8 bytes in the header; clients and proxies must preserve those bytes without normalization or re-encoding. Clients that cannot send UTF-8 header bytes should use an ASCII key.
 
-`GET /api/todos` returns a newest-first JSON array; `page` and `per_page` are positive integers, defaulting to 1 and 20, with a maximum page size of 100. `POST /api/todos` requires string `title` and `description` fields (use an empty description if needed); `deadline` is optional and uses `YYYY-MM-DDTHH:MM`. Invalid input returns JSON with status 400; a missing todo returns JSON with status 404.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:1fa40bc27f9b54f8b8afcfea163e8deaf2e07fced3d74f6276aadebb0059b7ea -->
+
+`GET /api/todos` returns a newest-first JSON array; `page` and `per_page` are positive integers, defaulting to 1 and 20, with a maximum page size of 100. `POST /api/todos` requires string `title` and `description` fields (use an empty description if needed); `deadline` is optional and uses `YYYY-MM-DDTHH:MM`. Invalid input returns JSON with status 400.
+
+`GET /api/todos/<todo_id>` retrieves one todo. For example, replace the host, ID, and key in `curl https://your-domain.example/api/todos/123 -H "X-API-Key: <your-key>"`. A missing todo returns status 404 with JSON `{"error": "Todo not found"}`.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 <!-- /coderabbit-ai-generated:v1 -->
 

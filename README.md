@@ -48,7 +48,15 @@ For local development only, set `ALLOW_INSECURE_HTTP=1`, then run `python app.py
 
 ### REST API
 
-Send the configured key in the `X-API-Key` header over HTTPS. `GET /api/todos` returns a newest-first JSON array; `page` and `per_page` are positive integers, defaulting to 1 and 20, with a maximum page size of 100. `POST /api/todos` requires string `title` and `description` fields (use an empty description if needed); `deadline` is optional and uses `YYYY-MM-DDTHH:MM`. Invalid input returns JSON with status 400; a missing todo returns JSON with status 404.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:9521c60d08c9d114b509d6018364228304762e3b5816c82870c45940cc1a4b01 -->
+
+Send the configured key in the `X-API-Key` header over HTTPS. Encode the exact key as UTF-8 bytes in the header; clients and proxies must preserve those bytes without normalization or re-encoding. Clients that cannot send UTF-8 header bytes should use an ASCII key.
+
+`GET /api/todos` returns a newest-first JSON array; `page` and `per_page` are positive integers, defaulting to 1 and 20, with a maximum page size of 100. `POST /api/todos` requires string `title` and `description` fields (use an empty description if needed); `deadline` is optional and uses `YYYY-MM-DDTHH:MM`. Invalid input returns JSON with status 400; a missing todo returns JSON with status 404.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 <!-- /coderabbit-ai-generated:v1 -->
 

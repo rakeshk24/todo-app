@@ -60,6 +60,10 @@ class ApiTests(unittest.TestCase):
             response = self.client.get('/api/todos', base_url=self.https,
                                        environ_overrides={'HTTP_X_API_KEY': wsgi_value})
             self.assertEqual(response.status_code, 200)
+            # A Latin-1 encoded header for the same text is not the UTF-8 key.
+            response = self.client.get('/api/todos', base_url=self.https,
+                                       environ_overrides={'HTTP_X_API_KEY': key})
+            self.assertEqual(response.status_code, 401)
             response = self.client.get('/api/todos', base_url=self.https,
                                        environ_overrides={'HTTP_X_API_KEY': 'wrong-key'})
             self.assertEqual(response.status_code, 401)

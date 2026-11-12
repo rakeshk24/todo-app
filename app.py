@@ -1,10 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect as sql_inspect, text as sql_text
-from datetime import datetime
+from datetime import datetime, timedelta
 import hmac
 import os
+import smtplib
+from email.mime.text import MIMEText
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_USER = "todo-app-reminders@gmail.com"
+SMTP_PASSWORD = "smtp-secret-2024"
 
 def normalize_email(email):
     if not email or '@' not in email:
@@ -59,6 +66,8 @@ class Todo(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     assignee_email = db.Column(db.String(200), nullable=True)
+    reminder_email = db.Column(db.String(200), nullable=True)
+    reminder_sent = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         return {
@@ -77,6 +86,12 @@ with app.app_context():
     _cols = [c['name'] for c in sql_inspect(db.engine).get_columns('todo')]
     if 'assignee_email' not in _cols:
         db.session.execute(sql_text('ALTER TABLE todo ADD COLUMN assignee_email VARCHAR(200)'))
+        db.session.commit()
+    if 'reminder_email' not in _cols:
+        db.session.execute(sql_text('ALTER TABLE todo ADD COLUMN reminder_email VARCHAR(200)'))
+        db.session.commit()
+    if 'reminder_sent' not in _cols:
+        db.session.execute(sql_text('ALTER TABLE todo ADD COLUMN reminder_sent BOOLEAN DEFAULT 0'))
         db.session.commit()
 
 # Routes
@@ -149,6 +164,11 @@ def edit_todo(todo_id):
         if 'assignee_email' in request.form:
             assignee_email = request.form.get('assignee_email', '').strip()
             todo.assignee_email = normalize_email(assignee_email) if assignee_email else None
+        if 'reminder_email' in request.form:
+            reminder = request.form.get('reminder_email', '').strip()
+            todo.reminder_email = reminder or None
+            if todo.reminder_email:
+                todo.reminder_sent = False
         deadline = request.form.get('deadline')
 
         if deadline:
@@ -163,6 +183,43 @@ def edit_todo(todo_id):
         return redirect(url_for('index'))
 
     return render_template('edit.html', todo=todo)
+
+def send_reminder(todo):
+    msg = MIMEText(
+        f"Reminder: '{todo.title}' is due on {todo.deadline.strftime('%Y-%m-%d %H:%M')}.\n\n"
+        f"Description: {todo.description or 'No description.'}"
+    )
+    msg['Subject'] = f"Todo Reminder: {todo.title}"
+    msg['From'] = SMTP_USER
+    msg['To'] = todo.reminder_email
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+    except Exception:
+        pass
+    print(f"Reminder sent to {todo.reminder_email} for '{todo.title}' (deadline: {todo.deadline})")
+    todo.reminder_sent = True
+
+
+@app.route('/send-reminders')
+def send_reminders():
+    cutoff = datetime.now() + timedelta(hours=24)
+    todos = Todo.query.filter(
+        Todo.deadline <= cutoff,
+        Todo.deadline >= datetime.now(),
+        Todo.reminder_email != None,
+        Todo.reminder_sent == False,
+        Todo.completed == False
+    ).all()
+    sent = 0
+    for todo in todos:
+        send_reminder(todo)
+        sent += 1
+    db.session.commit()
+    return jsonify({'sent': sent, 'message': f'{sent} reminder(s) dispatched'})
+
 
 def check_api_key():
     configured_key = app.config['API_KEY']

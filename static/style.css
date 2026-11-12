@@ -254,6 +254,10 @@ textarea.input-field {
     align-items: center;
 }
 
+.subtask-toggle input[type="checkbox"] {
+    pointer-events: none;
+}
+
 .subtask-form {
     display: flex;
     gap: 6px;

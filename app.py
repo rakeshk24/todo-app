@@ -23,7 +23,8 @@ app = Flask(__name__)
 app.config['API_KEY'] = os.environ.get('TODO_API_KEY', '')
 
 # Set this only when the application is reachable exclusively through trusted proxies.
-proxy_hops = int(os.environ.get('TRUSTED_PROXY_HOPS', '0'))
+ON_VERCEL = bool(os.environ.get('VERCEL'))
+proxy_hops = int(os.environ.get('TRUSTED_PROXY_HOPS', '1' if ON_VERCEL else '0'))
 if proxy_hops < 0:
     raise ValueError('TRUSTED_PROXY_HOPS must be non-negative')
 if proxy_hops:
@@ -31,7 +32,9 @@ if proxy_hops:
         app.wsgi_app, x_for=0, x_proto=proxy_hops, x_host=0, x_port=0, x_prefix=0
     )
 app.config['ALLOW_INSECURE_HTTP'] = os.environ.get('ALLOW_INSECURE_HTTP') == '1'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todos.db'
+# Vercel's filesystem is read-only except /tmp
+default_db_uri = 'sqlite:////tmp/todos.db' if ON_VERCEL else 'sqlite:///todos.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', default_db_uri)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)

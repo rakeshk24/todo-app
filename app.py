@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect as sql_inspect, text as sql_text
-from datetime import datetime
+from datetime import datetime, timedelta
 import hmac
 import os
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -92,7 +92,11 @@ def index():
         ).order_by(Todo.created_at.desc()).all()
     else:
         todos = Todo.query.order_by(Todo.created_at.desc()).all()
-    return render_template('index.html', todos=todos, current_assignee=assignee)
+    GRACE_MINUTES = 60
+    cutoff = datetime.now() - timedelta(minutes=GRACE_MINUTES)
+    overdue_ids = [t.id for t in todos if t.deadline and not t.completed and t.deadline < cutoff]
+    return render_template('index.html', todos=todos, current_assignee=assignee,
+                           overdue_ids=overdue_ids)
 
 @app.route('/add', methods=['POST'])
 def add_todo():

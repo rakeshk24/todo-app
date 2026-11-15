@@ -69,6 +69,9 @@
                                 </a>
                                 <div class="todo-text">
                                     <h3 class="todo-title">{{ todo.title }}</h3>
+                                    {% if todo.id in overdue_ids %}
+                                        <span style="background: #ffe0e0; color: #c0392b; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; font-weight: bold;">Overdue</span>
+                                    {% endif %}
                                     {% if todo.description %}
                                         <p class="todo-description">{{ todo.description }}</p>
                                     {% endif %}

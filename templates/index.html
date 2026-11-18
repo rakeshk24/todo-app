@@ -85,6 +85,9 @@
                                     {% if todo.assignee_email %}
                                         <span style="background: #e8d5ff; color: #764ba2; padding: 2px 10px; border-radius: 10px; font-size: 0.8em; display: inline-block; margin-top: 6px;">{{ todo.assignee_email }}</span>
                                     {% endif %}
+                                    {% if todo.reminder_email and not todo.completed %}
+                                        <span style="color: orange; font-size: 0.85em; display: inline-block; margin-top: 4px;">⏰ {{ todo.reminder_email }}</span>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="todo-actions">

@@ -167,6 +167,30 @@ def edit_todo(todo_id):
 
     return render_template('edit.html', todo=todo)
 
+@app.route('/bulk-action', methods=['POST'])
+def bulk_action():
+    action = request.form.get('action')
+    todo_ids = request.form.getlist('todo_ids')
+
+    if not todo_ids:
+        return redirect(url_for('index'))
+
+    ids = [int(i) for i in todo_ids]
+    todos = Todo.query.filter(Todo.id.in_(ids)).all()
+    print(f"Bulk {action} by {request.remote_addr}: ids={todo_ids}, titles={[t.title for t in todos]}")
+
+    if action == 'complete':
+        for todo in todos:
+            todo.completed = True
+            todo.completed_at = datetime.now()
+    elif action == 'delete':
+        for todo in todos:
+            db.session.delete(todo)
+
+    db.session.commit()
+    return redirect(url_for('index'))
+
+
 def check_api_key():
     configured_key = app.config['API_KEY']
     if not configured_key:

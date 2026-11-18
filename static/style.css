@@ -221,6 +221,35 @@ textarea.input-field {
     font-size: 1.1em;
 }
 
+/* Bulk select checkbox */
+.todo-select {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+/* Bulk action bar */
+.bulk-action-bar {
+    position: sticky;
+    bottom: 20px;
+    background: #333;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.bulk-action-bar span {
+    flex: 1;
+    font-size: 0.95em;
+}
+
 /* API info section */
 .api-info-section {
     margin-top: 40px;

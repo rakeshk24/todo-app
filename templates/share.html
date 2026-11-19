@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Todo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Shared Todo</h1>
+
+        <div class="share-card">
+            <h2>{{ todo.title }}</h2>
+            {% if todo.description %}
+                <p class="todo-description">{{ todo.description }}</p>
+            {% endif %}
+            {% if todo.deadline %}
+                <p class="todo-deadline">
+                    <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
+                </p>
+            {% endif %}
+            <span style="background: #d5e8ff; color: #1a4d8f; padding: 2px 10px; border-radius: 10px; font-size: 0.8em;">
+                {% if todo.completed %}Completed{% else %}Open{% endif %}
+            </span>
+        </div>
+
+        <div class="button-group share-actions">
+            <button type="button" id="copy-link" class="btn btn-primary">Copy link</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to todos</a>
+        </div>
+        <p id="copy-status" class="share-status"></p>
+    </div>
+    <script src="{{ url_for('static', filename='share.js') }}"></script>
+</body>
+</html>

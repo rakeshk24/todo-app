@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TEMP = tempfile.TemporaryDirectory()
 APP_ROOT = Path(TEMP.name)
 shutil.copy(ROOT / 'app.py', APP_ROOT / 'app.py')
+shutil.copy(ROOT / 'sharing.py', APP_ROOT / 'sharing.py')
 shutil.copytree(ROOT / 'templates', APP_ROOT / 'templates')
 shutil.copytree(ROOT / 'static', APP_ROOT / 'static')
 TEST_ENV = os.environ.copy()

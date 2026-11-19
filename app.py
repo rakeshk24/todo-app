@@ -5,6 +5,8 @@ from datetime import datetime
 import hmac
 import os
 from werkzeug.middleware.proxy_fix import ProxyFix
+from config.defaults import DEFAULT_SORT, DEFAULT_DIRECTION
+from utils.sorting import sort_todos
 
 def normalize_email(email):
     if not email or '@' not in email:
@@ -62,6 +64,7 @@ class Todo(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     assignee_email = db.Column(db.String(200), nullable=True)
+    priority = db.Column(db.String(20), default='none')
 
     def to_dict(self):
         return {
@@ -71,7 +74,8 @@ class Todo(db.Model):
             'deadline': self.deadline.strftime('%Y-%m-%d %H:%M') if self.deadline else None,
             'completed': self.completed,
             'completed_at': self.completed_at.strftime('%Y-%m-%d %H:%M') if self.completed_at else None,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else None
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else None,
+            'priority': self.priority,
         }
 
 # Create tables
@@ -81,24 +85,37 @@ with app.app_context():
     if 'assignee_email' not in _cols:
         db.session.execute(sql_text('ALTER TABLE todo ADD COLUMN assignee_email VARCHAR(200)'))
         db.session.commit()
+    if 'priority' not in _cols:
+        db.session.execute(sql_text("ALTER TABLE todo ADD COLUMN priority VARCHAR(20) DEFAULT 'none'"))
+        db.session.commit()
 
 # Routes
 @app.route('/')
 def index():
     assignee = request.args.get('assignee', '').strip()
+    sort_by = request.args.get('sort_by', DEFAULT_SORT)
+    direction = request.args.get('direction', DEFAULT_DIRECTION)
+
     if assignee:
         todos = Todo.query.filter_by(
             assignee_email=normalize_email(assignee)
-        ).order_by(Todo.created_at.desc()).all()
+        ).all()
     else:
-        todos = Todo.query.order_by(Todo.created_at.desc()).all()
-    return render_template('index.html', todos=todos, current_assignee=assignee)
+        todos = Todo.query.all()
+
+    todos = sort_todos(todos, sort_by, direction)
+    print(f"Sort={sort_by} dir={direction} ip={request.remote_addr}: titles={[t.title for t in todos[:5]]}")
+
+    return render_template('index.html', todos=todos, current_assignee=assignee,
+                           current_sort=sort_by, current_direction=direction)
 
 @app.route('/add', methods=['POST'])
 def add_todo():
     title = request.form.get('title')
     description = request.form.get('description')
     deadline = request.form.get('deadline')
+
+    priority = request.form.get('priority', 'none')
 
     if not title:
         return redirect(url_for('index'))
@@ -118,7 +135,7 @@ def add_todo():
     else:
         deadline_obj = datetime.strptime(get_today_date(), '%Y-%m-%d')
 
-    new_todo = Todo(title=title, description=description, deadline=deadline_obj)
+    new_todo = Todo(title=title, description=description, deadline=deadline_obj, priority=priority)
     db.session.add(new_todo)
     db.session.commit()
 
@@ -149,6 +166,7 @@ def edit_todo(todo_id):
     if request.method == 'POST':
         todo.title = request.form.get('title', todo.title)
         todo.description = request.form.get('description', todo.description)
+        todo.priority = request.form.get('priority', todo.priority or 'none')
         if 'assignee_email' in request.form:
             assignee_email = request.form.get('assignee_email', '').strip()
             todo.assignee_email = normalize_email(assignee_email) if assignee_email else None

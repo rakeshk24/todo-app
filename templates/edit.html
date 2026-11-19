@@ -38,6 +38,12 @@
                     value="{{ todo.assignee_email or '' }}"
                     class="input-field"
                 />
+                <select name="priority" class="input-field">
+                    <option value="none" {% if not todo.priority or todo.priority == 'none' %}selected{% endif %}>No Priority</option>
+                    <option value="low" {% if todo.priority == 'low' %}selected{% endif %}>Low</option>
+                    <option value="medium" {% if todo.priority == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="high" {% if todo.priority == 'high' %}selected{% endif %}>High</option>
+                </select>
                 <div class="button-group">
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                     <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>

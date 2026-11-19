@@ -27,3 +27,24 @@ def get_priority_label(priority):
 def get_priority_css_class(priority):
     classes = {'high': 'priority-high', 'medium': 'priority-medium', 'low': 'priority-low'}
     return classes.get(priority, '')
+
+
+def group_by_priority(todos):
+    groups = {'high': [], 'medium': [], 'low': [], 'none': []}
+    for todo in todos:
+        key = todo.priority if todo.priority in groups else 'none'
+        groups[key].append(todo)
+    return groups
+
+
+def split_completed(todos):
+    active = [t for t in todos if not t.completed]
+    done = [t for t in todos if t.completed]
+    return active, done
+
+
+def sort_and_group(todos, sort_by, direction='asc'):
+    active, done = split_completed(todos)
+    active_sorted = sort_todos(active, sort_by, direction)
+    done_sorted = sort_todos(done, sort_by, direction)
+    return active_sorted + done_sorted

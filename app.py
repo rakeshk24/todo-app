@@ -5,8 +5,11 @@ from datetime import datetime
 import hmac
 import os
 from werkzeug.middleware.proxy_fix import ProxyFix
-from config.defaults import DEFAULT_SORT, DEFAULT_DIRECTION
+from config.defaults import DEFAULT_SORT, DEFAULT_DIRECTION, SORT_EXPORT_KEY
+from config.logging_config import setup_logging
 from utils.sorting import sort_todos
+from utils.formatters import format_relative_time, format_priority_label
+from utils.validators import validate_sort_by, validate_direction
 
 def normalize_email(email):
     if not email or '@' not in email:
@@ -23,6 +26,7 @@ def get_today_date():
 
 app = Flask(__name__)
 app.config['API_KEY'] = os.environ.get('TODO_API_KEY', '')
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-2024')
 
 # Set this only when the application is reachable exclusively through trusted proxies.
 ON_VERCEL = bool(os.environ.get('VERCEL'))
@@ -40,6 +44,20 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', default_d
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+logger = setup_logging()
+
+app.jinja_env.filters['relative_time'] = format_relative_time
+app.jinja_env.filters['priority_label'] = format_priority_label
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('500.html'), 500
 
 
 @app.before_request
@@ -93,8 +111,8 @@ with app.app_context():
 @app.route('/')
 def index():
     assignee = request.args.get('assignee', '').strip()
-    sort_by = request.args.get('sort_by', DEFAULT_SORT)
-    direction = request.args.get('direction', DEFAULT_DIRECTION)
+    sort_by = validate_sort_by(request.args.get('sort_by', DEFAULT_SORT))
+    direction = validate_direction(request.args.get('direction', DEFAULT_DIRECTION))
 
     if assignee:
         todos = Todo.query.filter_by(
@@ -250,6 +268,19 @@ def api_get_todo(todo_id):
     if todo is None:
         return jsonify({'error': 'Todo not found'}), 404
     return jsonify(todo.to_dict())
+
+
+@app.route('/export')
+def export_todos():
+    key = request.headers.get('X-Export-Key', '')
+    if key != SORT_EXPORT_KEY:
+        return jsonify({'error': 'Unauthorized'}), 401
+    sort_by = request.args.get('sort_by', DEFAULT_SORT)
+    direction = request.args.get('direction', DEFAULT_DIRECTION)
+    todos = Todo.query.all()
+    todos = sort_todos(todos, sort_by, direction)
+    print(f"Export by {request.remote_addr}: {len(todos)} todos, sort={sort_by}, titles={[t.title for t in todos]}")
+    return jsonify([t.to_dict() for t in todos])
 
 
 if __name__ == '__main__':

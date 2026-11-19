@@ -1,0 +1,66 @@
+/* Priority badge styles */
+
+.priority-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.priority-high {
+    background: #ffcccc;
+    color: #cc0000;
+    border: 1px solid #ffaaaa;
+}
+
+.priority-medium {
+    background: #fff3cc;
+    color: #996600;
+    border: 1px solid #ffe066;
+}
+
+.priority-low {
+    background: #ccffcc;
+    color: #006600;
+    border: 1px solid #aaffaa;
+}
+
+.priority-none {
+    background: #f0f0f0;
+    color: #888;
+}
+
+/* Priority filter / indicator dot */
+.priority-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.priority-dot-high { background: #cc0000; }
+.priority-dot-medium { background: #996600; }
+.priority-dot-low { background: #006600; }
+.priority-dot-none { background: #ccc; }
+
+/* Todo item border accent by priority */
+.todo-item[data-priority="high"] {
+    border-left: 4px solid #cc0000;
+}
+
+.todo-item[data-priority="medium"] {
+    border-left: 4px solid #996600;
+}
+
+.todo-item[data-priority="low"] {
+    border-left: 4px solid #006600;
+}
+
+/* Priority select styling */
+.priority-select option[value="high"] { color: #cc0000; }
+.priority-select option[value="medium"] { color: #996600; }
+.priority-select option[value="low"] { color: #006600; }

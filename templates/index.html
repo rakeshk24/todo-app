@@ -1,173 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo List App</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>My Todo List</h1>
+{% extends 'base.html' %}
+{% block title %}My Todo List{% endblock %}
 
-        <!-- Add Todo Form -->
-        <div class="add-todo-section">
-            <h2>Add New Todo</h2>
-            <form method="POST" action="{{ url_for('add_todo') }}" class="todo-form">
-                <input
-                    type="text"
-                    name="title"
-                    placeholder="Todo title"
-                    required
-                    class="input-field"
-                />
-                <textarea
-                    name="description"
-                    placeholder="Description (optional)"
-                    class="input-field"
-                ></textarea>
-                <input
-                    type="datetime-local"
-                    name="deadline"
-                    class="input-field"
-                />
-                <select name="priority" class="input-field">
-                    <option value="none">No Priority</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                </select>
-                <button type="submit" class="btn btn-primary">Add Todo</button>
-            </form>
-        </div>
+{% block content %}
+<h1>My Todo List</h1>
 
-        <!-- Assignee Filter -->
-        <div class="assignee-filter">
-            <form method="GET" action="{{ url_for('index') }}" class="filter-form">
-                <input
-                    type="hidden"
-                    name="sort_by"
-                    value="{{ current_sort }}"
-                />
-                <input
-                    type="hidden"
-                    name="direction"
-                    value="{{ current_direction }}"
-                />
-                <input
-                    type="text"
-                    name="assignee"
-                    placeholder="Filter by assignee email"
-                    value="{{ current_assignee }}"
-                    class="input-field filter-input"
-                />
-                <button type="submit" class="btn btn-secondary">Filter</button>
-                {% if current_assignee %}
-                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Clear</a>
-                {% endif %}
-            </form>
-        </div>
+{% include 'partials/todo_form.html' %}
 
-        <!-- Sort Bar -->
-        {% include 'partials/sort_bar.html' %}
+<!-- Assignee Filter -->
+<div class="assignee-filter">
+    <form method="GET" action="{{ url_for('index') }}" class="filter-form">
+        <input type="hidden" name="sort_by" value="{{ current_sort }}" />
+        <input type="hidden" name="direction" value="{{ current_direction }}" />
+        <input
+            type="text"
+            name="assignee"
+            placeholder="Filter by assignee email"
+            value="{{ current_assignee }}"
+            class="input-field filter-input"
+        />
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        {% if current_assignee %}
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
 
-        <!-- Todos List -->
-        <div class="todos-section">
-            <h2>Your Todos{% if current_assignee %} assigned to {{ current_assignee }}{% endif %}</h2>
-            {% if todos %}
-                <form id="bulk-form" method="POST" action="{{ url_for('bulk_action') }}">
-                    <input type="hidden" name="action" id="bulk-action-input" value="">
-                    <div class="todos-container">
-                        {% for todo in todos %}
-                            <div class="todo-item {% if todo.completed %}completed{% endif %}">
-                                <input
-                                    type="checkbox"
-                                    name="todo_ids"
-                                    value="{{ todo.id }}"
-                                    class="todo-select"
-                                    onchange="updateBulkBar()"
-                                />
-                                <div class="todo-content">
-                                    <a href="{{ url_for('toggle_todo', todo_id=todo.id) }}" class="checkbox">
-                                        <input
-                                            type="checkbox"
-                                            {% if todo.completed %}checked{% endif %}
-                                            disabled
-                                        />
-                                    </a>
-                                    <div class="todo-text">
-                                        <h3 class="todo-title">{{ todo.title }}</h3>
-                                        {% if todo.priority and todo.priority != 'none' %}
-                                            <span style="background: {% if todo.priority == 'high' %}#ffcccc{% elif todo.priority == 'medium' %}#fff3cc{% else %}#ccffcc{% endif %}; color: #333; padding: 2px 10px; border-radius: 10px; font-size: 0.8em; display: inline-block; margin-top: 4px; font-weight: 600;">{{ todo.priority | upper }}</span>
-                                        {% endif %}
-                                        {% if todo.description %}
-                                            <p class="todo-description">{{ todo.description }}</p>
-                                        {% endif %}
-                                        {% if todo.deadline %}
-                                            <p class="todo-deadline">
-                                                <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
-                                            </p>
-                                        {% endif %}
-                                        {% if todo.completed_at %}
-                                            <p class="todo-completed-at">
-                                                <strong>Completed at:</strong> {{ todo.completed_at.strftime('%Y-%m-%d %H:%M') }}
-                                            </p>
-                                        {% endif %}
-                                        {% if todo.assignee_email %}
-                                            <span style="background: #e8d5ff; color: #764ba2; padding: 2px 10px; border-radius: 10px; font-size: 0.8em; display: inline-block; margin-top: 6px;">{{ todo.assignee_email }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="todo-actions">
-                                    <a href="{{ url_for('edit_todo', todo_id=todo.id) }}" class="btn btn-edit">Edit</a>
-                                    <a href="{{ url_for('delete_todo', todo_id=todo.id) }}" class="btn btn-delete" onclick="return confirm('Are you sure?')">Delete</a>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <div class="bulk-action-bar" id="bulk-bar" style="display:none;">
-                        <span id="bulk-count"></span>
-                        <button type="button" class="btn btn-edit" onclick="submitBulk('complete')">Complete Selected</button>
-                        <button type="button" class="btn btn-delete" onclick="submitBulk('delete')">Delete Selected</button>
-                    </div>
-                </form>
-            {% else %}
-                <p class="no-todos">No todos yet. Add one above!</p>
-            {% endif %}
-        </div>
-        <script src="{{ url_for('static', filename='js/sort.js') }}"></script>
-        <script>
-            function updateBulkBar() {
-                var checked = document.querySelectorAll('.todo-select:checked').length;
-                var bar = document.getElementById('bulk-bar');
-                bar.style.display = checked > 0 ? 'flex' : 'none';
-                document.getElementById('bulk-count').innerHTML = checked + ' selected';
-            }
-            function submitBulk(action) {
-                document.getElementById('bulk-action-input').value = action;
-                document.getElementById('bulk-form').submit();
-            }
-        </script>
-        <!-- API Info -->
-        <div class="api-info-section">
-            <h2>REST API</h2>
-            <p class="api-base">Example URL: <code>https://your-domain.example/api/todos</code></p>
-            <p>Replace your-domain.example with your HTTPS host.</p>
-            <p class="api-note">Pass your API key as the <code>X-API-Key</code> header.</p>
-            <p>Get one todo with <code>GET /api/todos/&lt;todo_id&gt;</code>. A missing todo returns
-                status 404 with JSON <code>{"error": "Todo not found"}</code>.</p>
-            <div class="api-examples">
-                <pre class="api-code">curl https://your-domain.example/api/todos \
+{% include 'partials/sort_bar.html' %}
+
+<!-- Todos List -->
+<div class="todos-section">
+    <h2>Your Todos{% if current_assignee %} assigned to {{ current_assignee }}{% endif %}</h2>
+    {% if todos %}
+        <form id="bulk-form" method="POST" action="{{ url_for('bulk_action') }}">
+            <input type="hidden" name="action" id="bulk-action-input" value="">
+            <div class="todos-container">
+                {% for todo in todos %}
+                    {% include 'partials/todo_item.html' %}
+                {% endfor %}
+            </div>
+            <div class="bulk-action-bar" id="bulk-bar" style="display:none;">
+                <span id="bulk-count"></span>
+                <button type="button" class="btn btn-edit" onclick="submitBulk('complete')">Complete Selected</button>
+                <button type="button" class="btn btn-delete" onclick="submitBulk('delete')">Delete Selected</button>
+            </div>
+        </form>
+    {% else %}
+        <p class="no-todos">No todos yet. Add one above!</p>
+    {% endif %}
+</div>
+
+<!-- API Info -->
+<div class="api-info-section">
+    <h2>REST API</h2>
+    <p class="api-base">Example URL: <code>https://your-domain.example/api/todos</code></p>
+    <p>Replace your-domain.example with your HTTPS host.</p>
+    <p class="api-note">Pass your API key as the <code>X-API-Key</code> header.</p>
+    <p>Get one todo with <code>GET /api/todos/&lt;todo_id&gt;</code>. A missing todo returns
+        status 404 with JSON <code>{"error": "Todo not found"}</code>.</p>
+    <div class="api-examples">
+        <pre class="api-code">curl https://your-domain.example/api/todos \
   -H "X-API-Key: &lt;your-key&gt;"</pre>
-                <pre class="api-code">curl https://your-domain.example/api/todos/123 \
+        <pre class="api-code">curl https://your-domain.example/api/todos/123 \
   -H "X-API-Key: &lt;your-key&gt;"</pre>
-                <pre class="api-code">curl -X POST https://your-domain.example/api/todos \
+        <pre class="api-code">curl -X POST https://your-domain.example/api/todos \
   -H "X-API-Key: &lt;your-key&gt;" \
   -H "Content-Type: application/json" \
   -d '{"title":"My todo","description":"Details"}'</pre>
-            </div>
-            <p>Replace 123 with the todo ID.</p>
-        </div>
     </div>
-</body>
-</html>
+    <p>See <a href="/export" class="api-link">GET /export</a> for full JSON export (requires <code>X-Export-Key</code>).</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/sort.js') }}"></script>
+<script>
+    function updateBulkBar() {
+        var checked = document.querySelectorAll('.todo-select:checked').length;
+        var bar = document.getElementById('bulk-bar');
+        bar.style.display = checked > 0 ? 'flex' : 'none';
+        document.getElementById('bulk-count').innerHTML = checked + ' selected';
+    }
+    function submitBulk(action) {
+        document.getElementById('bulk-action-input').value = action;
+        document.getElementById('bulk-form').submit();
+    }
+</script>
+{% endblock %}

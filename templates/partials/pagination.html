@@ -1,0 +1,11 @@
+{% if total_pages and total_pages > 1 %}
+<div class="pagination">
+    {% if current_page and current_page > 1 %}
+        <a href="?page={{ current_page - 1 }}&sort_by={{ current_sort }}&direction={{ current_direction }}{% if current_assignee %}&assignee={{ current_assignee }}{% endif %}" class="btn btn-secondary pagination-btn">&#8592; Prev</a>
+    {% endif %}
+    <span class="page-info">Page {{ current_page }} of {{ total_pages }}</span>
+    {% if current_page and current_page < total_pages %}
+        <a href="?page={{ current_page + 1 }}&sort_by={{ current_sort }}&direction={{ current_direction }}{% if current_assignee %}&assignee={{ current_assignee }}{% endif %}" class="btn btn-secondary pagination-btn">Next &#8594;</a>
+    {% endif %}
+</div>
+{% endif %}

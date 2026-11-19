@@ -1,0 +1,35 @@
+<div class="add-todo-section">
+    <h2>Add New Todo</h2>
+    <form method="POST" action="{{ url_for('add_todo') }}" class="todo-form">
+        <input
+            type="text"
+            name="title"
+            placeholder="Todo title"
+            required
+            class="input-field"
+        />
+        <textarea
+            name="description"
+            placeholder="Description (optional)"
+            class="input-field"
+        ></textarea>
+        <input
+            type="datetime-local"
+            name="deadline"
+            class="input-field"
+        />
+        <select name="priority" class="input-field priority-select">
+            <option value="none">No Priority</option>
+            <option value="low">&#9650; Low</option>
+            <option value="medium">&#9650;&#9650; Medium</option>
+            <option value="high">&#9650;&#9650;&#9650; High</option>
+        </select>
+        <input
+            type="text"
+            name="assignee_email"
+            placeholder="Assign to (email, optional)"
+            class="input-field"
+        />
+        <button type="submit" class="btn btn-primary">Add Todo</button>
+    </form>
+</div>

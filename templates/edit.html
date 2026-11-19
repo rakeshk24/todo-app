@@ -1,49 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Todo</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Edit Todo</h1>
+{% extends 'base.html' %}
+{% block title %}Edit Todo{% endblock %}
 
-        <div class="add-todo-section">
-            <form method="POST" action="{{ url_for('edit_todo', todo_id=todo.id) }}" class="todo-form">
-                <input
-                    type="text"
-                    name="title"
-                    placeholder="Todo title"
-                    value="{{ todo.title }}"
-                    required
-                    class="input-field"
-                />
-                <textarea
-                    name="description"
-                    placeholder="Description (optional)"
-                    class="input-field"
-                >{{ todo.description or '' }}</textarea>
-                <input
-                    type="datetime-local"
-                    name="deadline"
-                    class="input-field"
-                    value="{% if todo.deadline %}{{ todo.deadline.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
-                />
-                <input
-                    type="text"
-                    name="assignee_email"
-                    placeholder="Assign to (email address, optional)"
-                    value="{{ todo.assignee_email or '' }}"
-                    class="input-field"
-                />
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
+{% block content %}
+<h1>Edit Todo</h1>
+
+<div class="add-todo-section">
+    <form method="POST" action="{{ url_for('edit_todo', todo_id=todo.id) }}" class="todo-form">
+        <input
+            type="text"
+            name="title"
+            placeholder="Todo title"
+            value="{{ todo.title }}"
+            required
+            class="input-field"
+        />
+        <textarea
+            name="description"
+            placeholder="Description (optional)"
+            class="input-field"
+        >{{ todo.description or '' }}</textarea>
+        <input
+            type="datetime-local"
+            name="deadline"
+            class="input-field"
+            value="{% if todo.deadline %}{{ todo.deadline.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
+        />
+        <input
+            type="text"
+            name="assignee_email"
+            placeholder="Assign to (email address, optional)"
+            value="{{ todo.assignee_email or '' }}"
+            class="input-field"
+        />
+        <select name="priority" class="input-field priority-select">
+            <option value="none" {% if not todo.priority or todo.priority == 'none' %}selected{% endif %}>No Priority</option>
+            <option value="low" {% if todo.priority == 'low' %}selected{% endif %}>&#9650; Low</option>
+            <option value="medium" {% if todo.priority == 'medium' %}selected{% endif %}>&#9650;&#9650; Medium</option>
+            <option value="high" {% if todo.priority == 'high' %}selected{% endif %}>&#9650;&#9650;&#9650; High</option>
+        </select>
+        <div class="button-group">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
         </div>
-    </div>
-</body>
-</html>
+    </form>
+</div>
+{% endblock %}

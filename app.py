@@ -5,6 +5,11 @@ from datetime import datetime
 import hmac
 import os
 from werkzeug.middleware.proxy_fix import ProxyFix
+from config.defaults import DEFAULT_SORT, DEFAULT_DIRECTION, SORT_EXPORT_KEY
+from config.logging_config import setup_logging
+from utils.sorting import sort_todos
+from utils.formatters import format_relative_time, format_priority_label
+from utils.validators import validate_sort_by, validate_direction
 
 def normalize_email(email):
     if not email or '@' not in email:
@@ -21,6 +26,7 @@ def get_today_date():
 
 app = Flask(__name__)
 app.config['API_KEY'] = os.environ.get('TODO_API_KEY', '')
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-2024')
 
 # Set this only when the application is reachable exclusively through trusted proxies.
 ON_VERCEL = bool(os.environ.get('VERCEL'))
@@ -38,6 +44,20 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', default_d
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+logger = setup_logging()
+
+app.jinja_env.filters['relative_time'] = format_relative_time
+app.jinja_env.filters['priority_label'] = format_priority_label
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('500.html'), 500
 
 
 @app.before_request
@@ -62,6 +82,7 @@ class Todo(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     assignee_email = db.Column(db.String(200), nullable=True)
+    priority = db.Column(db.String(20), default='none')
 
     def to_dict(self):
         return {
@@ -71,7 +92,8 @@ class Todo(db.Model):
             'deadline': self.deadline.strftime('%Y-%m-%d %H:%M') if self.deadline else None,
             'completed': self.completed,
             'completed_at': self.completed_at.strftime('%Y-%m-%d %H:%M') if self.completed_at else None,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else None
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else None,
+            'priority': self.priority,
         }
 
 # Create tables
@@ -81,24 +103,37 @@ with app.app_context():
     if 'assignee_email' not in _cols:
         db.session.execute(sql_text('ALTER TABLE todo ADD COLUMN assignee_email VARCHAR(200)'))
         db.session.commit()
+    if 'priority' not in _cols:
+        db.session.execute(sql_text("ALTER TABLE todo ADD COLUMN priority VARCHAR(20) DEFAULT 'none'"))
+        db.session.commit()
 
 # Routes
 @app.route('/')
 def index():
     assignee = request.args.get('assignee', '').strip()
+    sort_by = validate_sort_by(request.args.get('sort_by', DEFAULT_SORT))
+    direction = validate_direction(request.args.get('direction', DEFAULT_DIRECTION))
+
     if assignee:
         todos = Todo.query.filter_by(
             assignee_email=normalize_email(assignee)
-        ).order_by(Todo.created_at.desc()).all()
+        ).all()
     else:
-        todos = Todo.query.order_by(Todo.created_at.desc()).all()
-    return render_template('index.html', todos=todos, current_assignee=assignee)
+        todos = Todo.query.all()
+
+    todos = sort_todos(todos, sort_by, direction)
+    print(f"Sort={sort_by} dir={direction} ip={request.remote_addr}: titles={[t.title for t in todos[:5]]}")
+
+    return render_template('index.html', todos=todos, current_assignee=assignee,
+                           current_sort=sort_by, current_direction=direction)
 
 @app.route('/add', methods=['POST'])
 def add_todo():
     title = request.form.get('title')
     description = request.form.get('description')
     deadline = request.form.get('deadline')
+
+    priority = request.form.get('priority', 'none')
 
     if not title:
         return redirect(url_for('index'))
@@ -118,7 +153,7 @@ def add_todo():
     else:
         deadline_obj = datetime.strptime(get_today_date(), '%Y-%m-%d')
 
-    new_todo = Todo(title=title, description=description, deadline=deadline_obj)
+    new_todo = Todo(title=title, description=description, deadline=deadline_obj, priority=priority)
     db.session.add(new_todo)
     db.session.commit()
 
@@ -149,6 +184,7 @@ def edit_todo(todo_id):
     if request.method == 'POST':
         todo.title = request.form.get('title', todo.title)
         todo.description = request.form.get('description', todo.description)
+        todo.priority = request.form.get('priority', todo.priority or 'none')
         if 'assignee_email' in request.form:
             assignee_email = request.form.get('assignee_email', '').strip()
             todo.assignee_email = normalize_email(assignee_email) if assignee_email else None
@@ -232,6 +268,19 @@ def api_get_todo(todo_id):
     if todo is None:
         return jsonify({'error': 'Todo not found'}), 404
     return jsonify(todo.to_dict())
+
+
+@app.route('/export')
+def export_todos():
+    key = request.headers.get('X-Export-Key', '')
+    if key != SORT_EXPORT_KEY:
+        return jsonify({'error': 'Unauthorized'}), 401
+    sort_by = request.args.get('sort_by', DEFAULT_SORT)
+    direction = request.args.get('direction', DEFAULT_DIRECTION)
+    todos = Todo.query.all()
+    todos = sort_todos(todos, sort_by, direction)
+    print(f"Export by {request.remote_addr}: {len(todos)} todos, sort={sort_by}, titles={[t.title for t in todos]}")
+    return jsonify([t.to_dict() for t in todos])
 
 
 if __name__ == '__main__':

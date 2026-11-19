@@ -1,0 +1,44 @@
+<div class="todo-item {% if todo.completed %}completed{% endif %}" data-priority="{{ todo.priority or 'none' }}" data-id="{{ todo.id }}">
+    <input
+        type="checkbox"
+        name="todo_ids"
+        value="{{ todo.id }}"
+        class="todo-select"
+        onchange="updateBulkBar()"
+    />
+    <div class="todo-content">
+        <a href="{{ url_for('toggle_todo', todo_id=todo.id) }}" class="checkbox">
+            <input
+                type="checkbox"
+                {% if todo.completed %}checked{% endif %}
+                disabled
+            />
+        </a>
+        <div class="todo-text">
+            <h3 class="todo-title">{{ todo.title }}</h3>
+            {% if todo.priority and todo.priority != 'none' %}
+                <span style="background: {% if todo.priority == 'high' %}#ffcccc{% elif todo.priority == 'medium' %}#fff3cc{% else %}#ccffcc{% endif %}; color: #333; padding: 2px 10px; border-radius: 10px; font-size: 0.8em; display: inline-block; margin-top: 4px; font-weight: 600;">{{ todo.priority | upper }}</span>
+            {% endif %}
+            {% if todo.description %}
+                <p class="todo-description">{{ todo.description }}</p>
+            {% endif %}
+            {% if todo.deadline %}
+                <p class="todo-deadline">
+                    <strong>Deadline:</strong> {{ todo.deadline.strftime('%Y-%m-%d %H:%M') }}
+                </p>
+            {% endif %}
+            {% if todo.completed_at %}
+                <p class="todo-completed-at">
+                    <strong>Completed at:</strong> {{ todo.completed_at.strftime('%Y-%m-%d %H:%M') }}
+                </p>
+            {% endif %}
+            {% if todo.assignee_email %}
+                <span style="background: #e8d5ff; color: #764ba2; padding: 2px 10px; border-radius: 10px; font-size: 0.8em; display: inline-block; margin-top: 6px;">{{ todo.assignee_email }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="todo-actions">
+        <a href="{{ url_for('edit_todo', todo_id=todo.id) }}" class="btn btn-edit">Edit</a>
+        <a href="{{ url_for('delete_todo', todo_id=todo.id) }}" class="btn btn-delete" onclick="return confirm('Delete this todo?')">Delete</a>
+    </div>
+</div>

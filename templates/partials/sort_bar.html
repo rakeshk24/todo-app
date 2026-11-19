@@ -1,0 +1,20 @@
+<div class="sort-bar">
+    <form method="GET" action="{{ url_for('index') }}" id="sort-form" class="sort-form">
+        {% if current_assignee %}
+            <input type="hidden" name="assignee" value="{{ current_assignee }}" />
+        {% endif %}
+        <input type="hidden" id="sort-direction" name="direction" value="{{ current_direction }}" />
+        <input type="hidden" id="sort-by-input" name="sort_by" value="{{ current_sort }}" />
+        <span class="sort-label">Sort:</span>
+        <button type="button" class="sort-btn {% if current_sort == 'priority' %}active{% endif %}" data-sort="priority">Priority</button>
+        <button type="button" class="sort-btn {% if current_sort == 'deadline' %}active{% endif %}" data-sort="deadline">Deadline</button>
+        <button type="button" class="sort-btn {% if current_sort == 'created' %}active{% endif %}" data-sort="created">Created</button>
+        <button type="button" class="sort-btn {% if current_sort == 'title' %}active{% endif %}" data-sort="title">Title</button>
+        <button type="button" class="btn btn-secondary sort-toggle" onclick="toggleSortDirection()">
+            {% if current_direction == 'asc' %}↑ Asc{% else %}↓ Desc{% endif %}
+        </button>
+        <input type="hidden" id="sort-by-val" value="{{ current_sort }}" />
+        <input type="hidden" id="sort-dir-val" value="{{ current_direction }}" />
+        <span id="sort-indicator" class="sort-indicator"></span>
+    </form>
+</div>

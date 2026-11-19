@@ -94,6 +94,7 @@ class AssigneeTests(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.root = Path(directory.name)
         shutil.copy(ROOT / 'app.py', self.root / 'app.py')
+        shutil.copy(ROOT / 'sharing.py', self.root / 'sharing.py')
         shutil.copytree(ROOT / 'templates', self.root / 'templates')
 
     def load_app(self):

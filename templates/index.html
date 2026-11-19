@@ -89,6 +89,7 @@
                             </div>
                             <div class="todo-actions">
                                 <a href="{{ url_for('edit_todo', todo_id=todo.id) }}" class="btn btn-edit">Edit</a>
+                                <a href="{{ url_for('share_todo', todo_id=todo.id) }}" class="btn btn-share">Share</a>
                                 <a href="{{ url_for('delete_todo', todo_id=todo.id) }}" class="btn btn-delete" onclick="return confirm('Are you sure?')">Delete</a>
                             </div>
                         </div>

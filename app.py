@@ -5,6 +5,7 @@ from datetime import datetime
 import hmac
 import os
 from werkzeug.middleware.proxy_fix import ProxyFix
+from sharing import make_token, read_token
 
 def normalize_email(email):
     if not email or '@' not in email:
@@ -62,6 +63,7 @@ class Todo(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     assignee_email = db.Column(db.String(200), nullable=True)
+    share_token = db.Column(db.String(100), nullable=True)
 
     def to_dict(self):
         return {
@@ -80,6 +82,9 @@ with app.app_context():
     _cols = [c['name'] for c in sql_inspect(db.engine).get_columns('todo')]
     if 'assignee_email' not in _cols:
         db.session.execute(sql_text('ALTER TABLE todo ADD COLUMN assignee_email VARCHAR(200)'))
+        db.session.commit()
+    if 'share_token' not in _cols:
+        db.session.execute(sql_text('ALTER TABLE todo ADD COLUMN share_token VARCHAR(100)'))
         db.session.commit()
 
 # Routes
@@ -166,6 +171,26 @@ def edit_todo(todo_id):
         return redirect(url_for('index'))
 
     return render_template('edit.html', todo=todo)
+
+@app.route('/share/<int:todo_id>')
+def share_todo(todo_id):
+    todo = Todo.query.get_or_404(todo_id)
+    todo.share_token = make_token(todo.id)
+    db.session.commit()
+    return redirect(url_for('view_shared', token=todo.share_token))
+
+
+@app.route('/s/<token>')
+def view_shared(token):
+    todo_id = read_token(token)
+    if todo_id is None:
+        return redirect(url_for('index'))
+    todo = db.session.get(Todo, todo_id)
+    if todo is None:
+        return redirect(url_for('index'))
+    print(f"Share link opened by {request.remote_addr} for '{todo.title}' assigned to {todo.assignee_email}")
+    return render_template('share.html', todo=todo, token=token)
+
 
 def check_api_key():
     configured_key = app.config['API_KEY']
